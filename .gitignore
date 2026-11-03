@@ -1,0 +1,16 @@
+/dev/history/*/logs/
+/release/
+/artifacts/
+/.venv/
+/.venvs/
+__pycache__/
+**/bin/
+**/obj/
+*.log
+.env
+*.env
+!*.env.example
+*.spec
+*.pfx
+*.key
+*.pem

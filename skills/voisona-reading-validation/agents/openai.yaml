@@ -1,0 +1,4 @@
+interface:
+  display_name: "読み検証・辞書改善"
+  short_description: "音声合成と認識の読みを検証し複数モデル照会と辞書改善の履歴を残す"
+  default_prompt: "$voisona-reading-validation を使って原文の読みを検証し、辞書改善の判断と履歴を残してください。"
