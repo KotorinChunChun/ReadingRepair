@@ -82,10 +82,14 @@ class HttpWavBackend:
         snapshot = lab.dictionary_snapshot(self.path,text)
         # 長い語句を優先し、置換したカタカナを再び置換しない。
         rows = snapshot['table']['rows']; mapping={}
-        for _,surface,reading,_ in rows: mapping.setdefault(surface,reading)
+        from adjudication import width_key
+        for _,surface,reading,_ in rows: mapping.setdefault(width_key(surface),reading)
         if not mapping: return text
         pattern = re.compile('|'.join(re.escape(s) for s in sorted(mapping,key=len,reverse=True)))
-        return pattern.sub(lambda m:mapping[m[0]],text)
+        pieces=[];cursor=0
+        for match in pattern.finditer(width_key(text)):
+            pieces.extend((text[cursor:match.start()],mapping[match[0]]));cursor=match.end()
+        return ''.join(pieces)+text[cursor:]
     def synthesize(self,text,path):
         import lab
         lab.check_cancel()

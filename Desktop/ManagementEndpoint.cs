@@ -26,7 +26,7 @@ internal sealed class ManagementEndpoint : IDisposable
     }
 
     public ManagementEndpoint(string id, System.Windows.Threading.Dispatcher dispatcher, Action show, Action stop,
-        Func<string?>? stopBlockReason = null, Func<object?>? shortcuts = null)
+        Func<string?>? stopBlockReason = null, Func<object?>? shortcuts = null, Func<bool>? ready = null)
     {
         _ = Task.Run(async () =>
         {
@@ -76,7 +76,7 @@ internal sealed class ManagementEndpoint : IDisposable
                     var capabilities = shortcuts == null ? new[] { "status", "show", "stop" } : new[] { "status", "show", "stop", "shortcuts" };
                     // 応答を読まないクライアントが単一の受付枠を占有し続けないよう、書込みにも期限を設ける。
                     await writer.WriteLineAsync(JsonSerializer.Serialize(new {
-                        protocolVersion = 2, requestId, pid = Environment.ProcessId, ready = uiReady,
+                        protocolVersion = 2, requestId, pid = Environment.ProcessId, ready = uiReady && (ready?.Invoke() ?? true),
                         version = version == null ? null : $"{version.Major}.{version.Minor}.{version.Build}",
                         launchOrigin = LaunchOrigin, capabilities, result, detail, shortcuts = keyState
                     }).AsMemory(), deadline.Token);

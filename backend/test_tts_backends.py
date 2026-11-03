@@ -5,6 +5,9 @@ import io
 import json
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
+import os
 import threading
 import unittest
 from unittest.mock import patch
@@ -48,6 +51,10 @@ class HttpTests(unittest.TestCase):
         self.assertFalse(self.backend.analyze('上手')['supported'])
         self.assertEqual(lab.auxiliary_talk_differences({'words':[]},self.backend.analyze('上手')),[])
         self.assertNotIn('test-secret',after.with_suffix('.tts-input.json').read_text(encoding='utf-8'))
+    def test_ascii_width_matching_preserves_unmatched_original_text(self):
+        self.backend.register(self.root/'run','HTTP',[{'surface':'HTTP','reading':'エイチティーティーピー'}])
+        self.assertEqual(self.backend.transformed_text('ＡとＨＴＴＰ。'),'Ａとエイチティーティーピー。')
+        self.assertEqual(lab.dictionary_snapshot(self.root/'dictionary.json','ＨＴＴＰ')['words'][0]['surface'],'ＨＴＴＰ')
     def test_existing_conflict_never_overwrites_dictionary(self):
         self.backend.register(self.root/'a','上手',[{'surface':'上手','reading':'ジョーズ'}]);before=self.root.joinpath('dictionary.json').read_bytes()
         with self.assertRaises(ValueError):self.backend.register(self.root/'b','上手',[{'surface':'上手','reading':'カミテ'}])
@@ -78,6 +85,11 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(self.server.requests[0][0]['input'],'上手\n上手');self.assertEqual(self.server.requests[1][0]['input'],'カミテ\nカミテ')
         self.assertEqual(result['before_score'],40);self.assertEqual(result['after_score'],100)
         self.assertTrue(Path(result['report']).is_file())
+    def test_cli_json_remains_utf8_when_windows_default_is_cp932(self):
+        env={**os.environ,'PYTHONUTF8':'0','PYTHONIOENCODING':'cp932'}
+        result=subprocess.run([sys.executable,str(Path(__file__).parent/'application.py'),'status','--job','bad','--settings',str(self.root/'isolated.json')],env=env,capture_output=True)
+        self.assertEqual(result.returncode,2)
+        self.assertEqual(json.loads(result.stdout.decode('utf-8'))['message'],'実行IDが不正です。')
     def test_profile_switch_selects_separate_dictionary(self):
         app=Application(self.root,self.root/'settings.json');app.save_settings({'api_dictionary_file':str(self.root/'first.json')})
         settings=app.save_settings({'tts_profile':'second'})

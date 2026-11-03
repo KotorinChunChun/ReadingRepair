@@ -1,36 +1,20 @@
 ---
 name: voisona-reading-validation
-description: "VoiSona Talkの読みをWhisper・TTS解析・複数LLMで検証し、ユーザー確認を含めた辞書候補の登録と前後評価を履歴へ残す。原文の読み検証・辞書改善実験に使い、通常の文章校正には使わない。"
+description: ReadingRepairのCLIでTTS音声とWhisper・複数LLMの読みを比較し、辞書反映・前後評価を履歴へ残す。
 ---
 
-# 読み検証・辞書改善
+# ReadingRepairによる読み検証
 
-## 既存ツールを使う
+ユーザーが指定したReadingRepair、または`C:/develop/KotorinToys/tools/ReadingRepair`でAGENTS.md、docs/guide.md、docs/tts-engines.mdを読む。旧VoisonaTalkAIの実装をコピーせず、Invoke-ReadingRepair.ps1を使う。
 
-現在の作業フォルダーかユーザー指定のVoisonaTalkAIで、`tools/PronunciationDictionaryLab/Start-Lab.ps1`と`docs/pronunciation-dictionary-lab.md`を探す。見つかったプロジェクトのAGENTS.mdと利用手順を読み、既存CLIを呼び出す。Skill内にAPI・登録処理を複製しない。別の作業ツリーへ勝手に切り替えない。
+`doctor`、`engines`、`dictionary`で現在の接続・能力・全件辞書を確認する。原文の`create`から`execute`へ進み、LLMの比較と辞書全件テーブルの送信を共通処理へ任せる。通常工程はCLIで行い、画面操作は表示確認やVoiSonaネイティブ辞書ヘルパーの診断だけに限定する。
 
-`application.py`がある場合はアプリ共通CLIを優先する。`Invoke-ReadingRepair.ps1 doctor/create/execute/status/history/answer/stop/audio/export`で設定とジョブを共有でき、`-Build`もGUIを開かない。通常の検証・登録・再開にはコンピュータユースを使わず、CLIで完了させる。画面の表示やボタン接続を確認する必要が明示された場合だけ、その確認をまとめて最小限にする。
+一次案とGemini・Sarashinaの有効な同読み2票を仮採用する。失敗・判断不能は棄権、2票未満はpending_confirmationで停止する。`status`、`log`、`llm-log`で理由を確認し、実際の利用者回答のみを`answer`へ保存して`execute`で再開する。保留のまま完了したと報告せず、架空の回答で実辞書へ登録しない。
 
-原文・音声合成の対象と辞書登録の依頼範囲を会話から確認する。質問だけなら回答に留める。候補作成だけの依頼では`-Apply`を付けない。既に登録まで指示されていれば重ねて承認を求めない。
+文脈で読みが変わる場合は対象語と登録語句を分け、「舞台の上手」のようなまとまりを登録する。ユーザーの訂正は最新のものを使う。却下は登録しない判断であり、TTS側の正しさの確定とは扱わない。
 
-## 読みの採用
+外部設定は`C:/AI/env/ReadingRepair/`などソース外に置き、キーをプロンプト・ログ・成果物へ出さない。既に許可された送信や登録を再確認しない。TTSの発音解析非対応とWhisper未実施を区別する。
 
-一次LLMの読みは仮説とする。原文と登録済みユーザー辞書の全件テーブルを各LLMへ添付する。音声合成はREST APIでWAV化し、Whisperには原文や正解のヒントを渡さない。TTS解析の発音も確認し、Whisperが漢字に戻して隠した発音差を拾う。
+VoiSonaは専用UIA/SendMessageヘルパーを使い、辞書を直接編集しない。HTTP TTSはアプリ管理のJSON辞書を使う。最新辞書と重複・競合確認して新規のみ反映し、再生成・文字起こし・同基準評価を確認する。自動追加を繰り返さず、未解決なら根拠と共に保留する。
 
-食い違いはGemini（APIまたはCLI）・SarashinaAPIへ独立照会する。他モデルの回答や候補の正解案を外部2モデルへ渡さない。現在の採用方針はユーザー指定により、一次案を含む有効回答の同じ読みが2票以上ならモデル多数決で仮採用する。照会失敗・未設定・判断不能は票に数えず、1票だけや1対1は確認待ちとする。人間が確認した正解とは表現しない。旧履歴の3モデル一致の判断は当時の記録として残す。
-
-多数決で2票以上が一致しない場合は`pending_confirmation`で止める。`confirmation-questions.json`を読んで、原文の文脈・候補読み・意見をユーザーへ示す。実際の回答を得てから回答テンプレートの`action`・`reading`・`reason`を記入し、`-AnswersFile`で再開する。空欄を回答済みと扱わず、模擬回答を実判断へ流用しない。却下は登録を却下した判断であり、正解読みの確定とは区別する。詳細経緯は共通CLIの`log`、送受信とモデル名は`llm-log`で確認できる。
-
-登録後に不一致が残ったら自動登録を繰り返さない。保存済み音声の再評価か、新しい試行での検証へ進む。元の点数と判断を残し、変更後の同じ採用基準で前後を比較する。
-
-同じ短語に文脈で異なる読みがある場合は、対象語の採用読みと辞書へ登録する語句を分ける。例えば対象語「上手」の`reading`がカミテでも、一律に上手＝カミテとせず、ユーザーの指定した`registration`を`{"surface":"舞台の上手","reading":"ブタイノカミテ"}`として登録する。原文内のまとまりとその全体の読みを使い、語句外の同じ短語の読みが保たれるか対照文で確認する。回答の訂正は最新の指示を採用し、置換された回答を登録判断へ使わない。
-
-## 実行と記録
-
-外部モデルのキーは`C:\AI\env\voisona-reading-review.env`または指定された外部設定を使う。設定がなければ配布用の空テンプレートをコピーし、既存ファイルは上書きしない。キーを画面・チャット・ログ・LLM入力へ出さない。設定の有無はプロバイダーの公開状態で確認する。
-
-PowerShellはpwshを使う。`-ProjectRoot`には既存のVoiSona REST接続設定とCodexモジュールのある場所を指定する。必要なら`-WhisperSitePackages`を指定し、キー設定後の再照会は`-Resume -RetryReviewers`を使う。再開先は同じ原文・条件の実行フォルダーとし、旧入力形式の履歴は変更せず新しい試行を作る。
-
-GUIへの入力は既存C# UIA・SendMessageヘルパーでの辞書登録に限定する。通常工程はAPI/CLIを優先し、画面認識でのクリック入力は障害の診断で必要な場合だけ検討する。辞書を直接書き換えない。
-
-実行結果は対象版の`dev/history/vX.Y.Z/logs/<実行識別子>/`へ保存する。停止時も`report/index.html`を残し、必要なら`export_history.py`で過去試行とまとめる。人間の回答、モデルの意見、採用根拠、暫定・採用後の点数、未実施工程を区別する。模擬試験・API接続・WAV生成・実再生・人間の聴取を別々の証拠として報告する。
+音声は`audio -Job <ID> -Phase after -Play`、HTMLは`export`を使う。実API接続、音声生成、再生、人間の聴取を別の証拠として報告する。実験データを公開リリースへ含めない。

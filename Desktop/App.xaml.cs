@@ -33,7 +33,7 @@ public partial class App : Application
             var window=new MainWindow();MainWindow=window;
             window.Closed+=(_,_)=>Shutdown();
             void ShowWindow(){window.Show();if(window.WindowState==WindowState.Minimized)window.WindowState=WindowState.Normal;window.Activate();}
-            management=new ManagementEndpoint(id,Dispatcher,ShowWindow,window.Close,()=>window.IsBusy ? "変換処理中です。停止してから終了してください。":null);
+            management=new ManagementEndpoint(id,Dispatcher,ShowWindow,window.Close,()=>window.IsBusy ? "変換処理中です。停止してから終了してください。":null,ready:()=>window.IsReady);
             if(!e.Args.Contains("--startup") && !e.Args.Contains("--hidden"))ShowWindow();
             await window.InitializeBackend();
             if(Option("--smoke-report") is { } report)

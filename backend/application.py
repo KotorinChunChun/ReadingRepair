@@ -436,6 +436,8 @@ class Application:
 
 
 def main():
+    for stream in (sys.stdin,sys.stdout,sys.stderr):
+        if hasattr(stream,'reconfigure'):stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=('settings', 'save-settings', 'doctor', 'create', 'execute', 'status', 'history', 'answer', 'stop', 'audio', 'export', 'dictionary', 'check-dictionary', 'add-dictionary', 'log', 'llm-log', 'engines', 'synthesize', 'transcribe', 'version'))
     parser.add_argument('--workspace', type=Path, default=WORKSPACE)

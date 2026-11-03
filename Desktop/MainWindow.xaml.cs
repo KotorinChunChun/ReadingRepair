@@ -63,7 +63,7 @@ public partial class MainWindow : Window
         };
     }
 
-    internal Task InitializeBackend()=>Safe(async ()=>{await ReloadSettings();await RefreshHistory();await ReloadDictionary();IsReady=true;});
+    internal Task InitializeBackend()=>Safe(async ()=>{await ReloadSettings();await RefreshHistory();try{await ReloadDictionary();}catch(Exception error){StatusText.Text="辞書を取得できません。設定を確認してください。"+error.Message;}IsReady=true;});
     internal bool IsBusy => busy;
     internal bool IsReady { get; private set; }
     async Task Safe(Func<Task> action)

@@ -104,8 +104,9 @@ def dictionary_snapshot(dictionary_file, original):
             surface, reading = entry['surface'], kana(entry['reading'])
             if not isinstance(surface,str) or not surface or len(surface)>80: raise ValueError('辞書の表記が不正です。')
             rows.append([len(rows)+1,surface,reading,None])
-            if surface in original and surface not in seen:
-                hints.append({'surface':surface,'reading':reading});seen.add(surface)
+            match=re.search(re.escape(width_key(surface)),width_key(original))
+            if match and width_key(surface) not in seen:
+                hints.append({'surface':original[match.start():match.end()],'reading':reading});seen.add(width_key(surface))
         return {'table':{'columns':['優先順位','表記','読み','アクセント核'],'rows':rows},'dictionary_sha256':hashlib.sha256(raw).hexdigest(),'words':hints}
     rows, hints = [], []
     seen = set()
@@ -784,7 +785,11 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project-root", type=Path, required=True, help="既存.envとCodexChat.psm1があるプロジェクト")
+    parser.add_argument("--project-root", type=Path, default=HERE.parent, help="互換項目。独立版は旧プロジェクトを参照しません。")
+    parser.add_argument('--tts-engine',choices=tts_backends.ENGINES,default='voisona')
+    parser.add_argument('--tts-profile',default='default')
+    parser.add_argument('--tts-env',type=Path,default=Path('C:/AI/env/ReadingRepair/tts.env'))
+    parser.add_argument('--api-dictionary-file',type=Path,default=Path(os.environ.get('LOCALAPPDATA',str(Path.home())))/'ReadingRepair/dictionaries/http-wav/default.json')
     parser.add_argument("--text-file", type=Path, required=True)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--llm-model", default="gpt-5.6-luna")
