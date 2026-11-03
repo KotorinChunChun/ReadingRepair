@@ -1,5 +1,11 @@
 # ReadingRepair の使い方
 
+## KotorinToysから導入
+
+KotorinToysで「状態を更新」し、ReadingRepairを選んで「インストール」を実行します。公開版・容量・SHA-256の確認後、現在ユーザーのPrograms/ReadingRepairへ導入します。自動起動は有効にしません。Pythonと.NETの実行環境を同梱し、既存の設定・履歴はLocalAppData/ReadingRepairへ保持します。
+
+GitHub ReleasesからReadingRepair-0.0.1-setup.exeを直接取得することもできます。ZIP版もログイン不要で利用できます。TTS・Whisperモデル・Codex CLIの初期設定は導入方式に関係なく必要です。
+
 ## 準備
 
 Windows 11 x64を対象とします。配布ZIPは任意のフォルダーへ展開して使えます。旧VoisonaTalkAIやKotorinToys本体のソースは不要です。

@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
     <AssemblyName>ReadingRepair.Registration</AssemblyName><Version>0.0.1</Version>
   </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Update="Microsoft.NETCore.App;Microsoft.WindowsDesktop.App.WPF" RuntimeFrameworkVersion="10.0.14" Condition="'$(SelfContained)' == 'true'" />
+    <KnownFrameworkReference Update="Microsoft.WindowsDesktop.App;Microsoft.WindowsDesktop.App.WPF" DefaultRuntimeFrameworkVersion="10.0.14" LatestRuntimeFrameworkVersion="10.0.14" Condition="'$(SelfContained)' == 'true'" />
+  </ItemGroup>
 </Project>
