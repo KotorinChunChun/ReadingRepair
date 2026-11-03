@@ -12,4 +12,8 @@ ZIPを展開してReadingRepair/ReadingRepair.exeを起動してください。P
 
 123件の回帰、UIA登録ヘルパー5件、自己完結ZIPの別配置で実音声生成・Whisper・実LLMの一巡と管理IPCを確認済みです。他社の実HTTP TTSへの接続と人間の聴取は未実施であり、HTTPアダプターはローカル検証サーバーで確認しました。
 
-このリリースは非公開リポジトリ内の配布です。取得にはアクセス権のあるGitHubアカウントが必要です。SHA-256は同梱のSHA256SUMS.txtを参照してください。
+このリリースは公開されています。GitHubへのログインなしで取得できます。
+
+KotorinToysから導入する場合は「状態を更新」してReadingRepairを選び、「インストール」を実行してください。直接導入する場合はReadingRepair-0.0.1-setup.exeを使います。setupは同じv0.0.1の機能に.NET 10.0.14と保守補助を同梱します。既存ZIP・SHA256SUMS・タグは保持しています。
+
+ZIPの照合はSHA256SUMS.txt、setupの照合はReadingRepair-SHA256SUMS.txtを使ってください。
