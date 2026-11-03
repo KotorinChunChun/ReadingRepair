@@ -21,7 +21,7 @@ FILES = (
     "post-adjudication.json", "post-confirmation-questions.json", "post-answers-template.json",
     "reference-final.json", "comparison-final-before.json", "comparison-final-after.json", "dictionary-invariance-check.json",
     "user-answers.json", "user-decision-record.json", "gemini-api-check.json", "provider-connection-check.json",
-    "context-regression-before.json", "context-regression.json", "app-job.json", "dictionary-precheck.json", "progress.jsonl", "progress.log",
+    "context-regression-before.json", "context-regression.json", "app-job.json", "dictionary-precheck.json", "progress.jsonl", "progress.log", "before-2.tts-input.json", "after-3.tts-input.json",
 )
 LLM_NAMES = ("reference", "comparison-1-2", "registration-plan", "comparison-1-3", "reference-adopted",
              "comparison-adopted-before", "reference-final", "comparison-final-before", "comparison-final-after")
@@ -31,9 +31,9 @@ STAGES = (
     ("before-2-whisper", "Whisperの文字起こし 2"), ("comparison-1-2", "1と2の暫定比較"),
     ("secondary-review", "外部2モデルへの独立照会"), ("adjudication", "採用判断と確認待ち"),
     ("reference-adopted", "採用した読みの基準"), ("comparison-adopted-before", "採用基準による登録前の再評価"),
-    ("registration-plan", "LLMによる登録計画"), ("dictionary-precheck", "最新辞書との重複・競合チェック"), ("registration", "UIAによる辞書登録"),
+    ("registration-plan", "LLMによる登録計画"), ("dictionary-precheck", "最新辞書との重複・競合チェック"), ("registration", "選択TTS用の辞書登録"),
     ("registered-readings", "登録後のユーザー辞書テーブル"),
-    ("after-3-audio", "登録後のVoiSona音声"), ("after-3-whisper", "Whisperの文字起こし 3"),
+    ("after-3-audio", "登録後のTTS音声"), ("after-3-whisper", "Whisperの文字起こし 3"),
     ("comparison-1-3", "1と3の比較・再評価"),
     ("post-secondary-review", "登録後の独立照会"), ("post-adjudication", "登録後の採用判断と確認待ち"),
     ("reference-final", "最終の採用基準"), ("comparison-final-before", "最終基準による登録前の評価"),

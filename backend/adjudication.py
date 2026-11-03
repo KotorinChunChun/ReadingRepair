@@ -35,6 +35,7 @@ def canonical(text):
 
 
 def tts_occurrences(original, analysis, surface):
+    if analysis.get('supported') is False: return []
     original, surface = width_key(original), width_key(surface)
     words, pieces, cursor = [], [], 0
     for node in ET.fromstring(analysis['analyzed_text']).iter('word'):

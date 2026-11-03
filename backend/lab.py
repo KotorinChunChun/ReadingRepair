@@ -24,6 +24,7 @@ from adjudication import adopted_readings, answer_template, candidates, covered_
 from reviewers import Config, DEFAULT_ENV, ReviewClients
 import progress_log
 import llm_records
+import tts_backends
 
 HERE = Path(__file__).resolve().parent
 FORMAT = "voisona.pronunciation-dictionary-lab.v1"
@@ -95,6 +96,17 @@ def reference_checked(original: str, result):
 
 def dictionary_snapshot(dictionary_file, original):
     raw = dictionary_file.read_bytes()
+    if dictionary_file.suffix.lower() == '.json':
+        value = json.loads(raw.decode('utf-8-sig'))
+        if value.get('format') != 'readingrepair.dictionary.v1' or not isinstance(value.get('entries'),list): raise ValueError('ReadingRepairのAPI用辞書形式が不正です。')
+        rows, hints, seen = [], [], set()
+        for entry in value['entries']:
+            surface, reading = entry['surface'], kana(entry['reading'])
+            if not isinstance(surface,str) or not surface or len(surface)>80: raise ValueError('辞書の表記が不正です。')
+            rows.append([len(rows)+1,surface,reading,None])
+            if surface in original and surface not in seen:
+                hints.append({'surface':surface,'reading':reading});seen.add(surface)
+        return {'table':{'columns':['優先順位','表記','読み','アクセント核'],'rows':rows},'dictionary_sha256':hashlib.sha256(raw).hexdigest(),'words':hints}
     rows, hints = [], []
     seen = set()
     for line in raw.decode("utf-8-sig").splitlines():
@@ -228,6 +240,7 @@ def plan_checked(original, reference, comparison, result):
 
 def auxiliary_talk_differences(reference, analysis):
     """TTS解析と基準の字面の差を別記する。Whisper評価値は変更しない。"""
+    if analysis.get('supported') is False: return []
     expected = {}
     for word in reference["words"]:
         expected.setdefault(word["surface"], set()).add(word["reading"])
@@ -369,11 +382,11 @@ class Llm:
         environment = os.environ.copy()
         # 資格情報をLLM起動プロセスに継承しない。
         for key in list(environment):
-            if key.startswith(("VOISONA_", "GEMINI_", "SARASHINA_", "GOOGLE_")):
+            if key.startswith(("VOISONA_", "GEMINI_", "SARASHINA_", "GOOGLE_", "READINGREPAIR_", "TTS_")):
                 del environment[key]
         try:
-            subprocess.run(["pwsh", "-NoProfile", "-File", str(HERE / "Invoke-LabLlm.ps1"),
-                        "-ProjectRoot", str(self.project_root), "-PromptFile", str(prompt_path),
+            subprocess.run(["pwsh", "-NoProfile", "-File", str((Path(sys.executable).resolve().parent if getattr(sys,"frozen",False) else HERE) / "Invoke-LabLlm.ps1"),
+                        "-PromptFile", str(prompt_path),
                         "-OutputFile", str(output_path), "-Model", self.model],
                        check=True, timeout=200, env=environment, capture_output=True)
             check_cancel()
@@ -415,7 +428,7 @@ REFERENCE_INSTRUCTION = """原文の全文の基準読みと、漢字を含む�
 形式: {"reading":"全文のカタカナ読み", "words":[{"surface":"原文に存在する単語", "reading":"その文脈のカタカナ読み"}]}"""
 
 COMPARE_INSTRUCTION = """提示された基準読み1を固定した比較を行ってください。基準自体の正しさはこの比較だけで保証しません。文字起こし中の漢字は文字起こし側の文脈で読み、原文へ勝手に修復しないでください。読みの一致が完全なら100点、不一致が大きいほど低い点を付けてください。
-違う文字起こしが得られた単語のうち、原文の基準wordsにある単語について誤読の可能性を示す候補をerrorsへ出してください。VoiSona・Whisper・基準読みのどれが誤っているかはまだ断定しません。単なる句読点の違い・同じ読みの表記違いは誤読としません。証拠がない語は追加しないでください。
+違う文字起こしが得られた単語のうち、原文の基準wordsにある単語について誤読の可能性を示す候補をerrorsへ出してください。TTS・Whisper・基準読みのどれが誤っているかはまだ断定しません。単なる句読点の違い・同じ読みの表記違いは誤読としません。証拠がない語は追加しないでください。
 形式: {"observed_reading":"文字起こし全文のカタカナ読み", "score":0から100の数値, "explanation":"理由", "errors":[{"surface":"基準wordsの表記", "expected_reading":"基準wordsの読み", "observed_reading":"文字起こし側の読み、省略は空文字", "evidence":"文字起こしのどの部分が違うか"}]}"""
 
 
@@ -518,8 +531,7 @@ def register_entries(run_dir, dictionary_file, original, entries):
     collected = [{**row} for row in checked['entries'] if row['state'] != 'new']
     entries = [{k:row[k] for k in ('surface','reading')} for row in checked['entries'] if row['state']=='new']
     if not entries: return {'entries':collected,'state':'already_registered','journals':[]}
-    dll = HERE / 'Registration/bin/Debug/net10.0-windows/Registration.dll'
-    if not dll.exists(): raise ValueError('登録ヘルパーを先にビルドしてください。')
+    helper = tts_backends.registration_command(HERE)
     journals = []
     for offset in range(0, len(entries), 20):
         check_cancel()
@@ -529,7 +541,7 @@ def register_entries(run_dir, dictionary_file, original, entries):
         batch_path = run_dir / f'registration-batch-{offset // 20 + 1:02d}.json'
         save(batch_path, {'original': original, 'entries': entries[offset:offset+20]})
         try:
-            subprocess.run(['dotnet', str(dll), 'register', str(batch_path), str(journal), str(dictionary_file)],
+            subprocess.run([*helper, 'register', str(batch_path), str(journal), str(dictionary_file)],
                            check=True, timeout=120, capture_output=True)
         except subprocess.CalledProcessError as error:
             # このヘルパーは認証情報を受け取らない。対象語の競合等だけを短く返す。
@@ -546,7 +558,7 @@ def run(args):
         raise ValueError("原文は1～4000文字にしてください。")
     settings = {"text_sha256": hashlib.sha256(text.encode()).hexdigest(), "llm_model": args.llm_model,
                 "whisper_model": str(args.whisper_model.resolve()), "voice": args.voice, "voice_version": args.voice_version,
-                "prompt_contract": PROMPT_CONTRACT}
+                "prompt_contract": PROMPT_CONTRACT, "tts_engine": getattr(args,"tts_engine","voisona"), "tts_profile": getattr(args,"tts_profile","default"), "tts_env": str(getattr(args,"tts_env","")), "dictionary_file": str(tts_backends.dictionary_path(args))}
     user_readings = getattr(args, 'user_readings', [])
     if user_readings:
         settings['user_readings_sha256'] = hashlib.sha256(json.dumps(user_readings,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
@@ -618,8 +630,9 @@ def run(args):
         return value
 
     try:
-        talk = TalkApi(args.project_root / ".env", args.voice, args.voice_version)
-        stage("preflight", lambda: {"voices": talk.call("GET", "voices")["items"]})
+        talk = tts_backends.create(args, TalkApi)
+        args.dictionary_file = tts_backends.dictionary_path(args)
+        stage("preflight", talk.preflight)
         hints = stage("known-readings", lambda: dictionary_snapshot(args.dictionary_file, text))
         llm.dictionary_table = hints["table"]
         def initial_reference():
@@ -706,7 +719,7 @@ def run(args):
             return
 
         def register():
-            return register_entries(run_dir, args.dictionary_file, text, plan['entries'])
+            return talk.register(run_dir, text, plan['entries'])
         registration = stage("registration", register)
         after_dictionary = stage("registered-readings", lambda: dictionary_snapshot(args.dictionary_file, text))
         llm.dictionary_table = after_dictionary["table"]

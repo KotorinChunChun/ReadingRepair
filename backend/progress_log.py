@@ -32,8 +32,10 @@ def details(stage, value):
     elif stage.endswith('-audio'):
         yield f'WAVを生成：{value["seconds"]:.3f}秒、{value["sample_rate"]}Hz。ファイル：{Path(value["wav"]).name}'
     elif stage.endswith('-talk-analysis'):
+        if value.get('supported') is False:
+            yield value['reason'];return
         for word in ET.fromstring(value['analyzed_text']).iter('word'):
-            if word.get('pronunciation'): yield f'VoiSonaの発音：{word.text or ""} → {word.get("pronunciation")}'
+            if word.get('pronunciation'): yield f'TTSの発音：{word.text or ""} → {word.get("pronunciation")}'
     elif stage.endswith('-whisper'):
         yield '音声から認識した文章：' + value['text']
     elif stage.startswith('comparison-'):

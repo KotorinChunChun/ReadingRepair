@@ -13,9 +13,9 @@ internal sealed class Backend
         var args=Environment.GetCommandLineArgs();
         string? Option(string name) { var i=Array.IndexOf(args,name); return i>=0 && i+1<args.Length ? args[i+1] : null; }
         var folder=new DirectoryInfo(AppContext.BaseDirectory);
-        while(folder!=null && !File.Exists(Path.Combine(folder.FullName,"tools","PronunciationDictionaryLab","application.py"))) folder=folder.Parent;
-        Workspace=Path.GetFullPath(Option("--workspace") ?? Environment.GetEnvironmentVariable("VOISONA_REPAIR_WORKSPACE") ?? folder?.FullName ?? throw new InvalidOperationException("作業フォルダーを指定してください。"));
-        SettingsFile=Path.GetFullPath(Option("--settings") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"VoisonaReadingRepair","settings.json"));
+        while(folder!=null && !File.Exists(Path.Combine(folder.FullName,"backend","application.py")) && !File.Exists(Path.Combine(folder.FullName,"backend","ReadingRepair.Backend.exe"))) folder=folder.Parent;
+        Workspace=Path.GetFullPath(Option("--workspace") ?? Environment.GetEnvironmentVariable("READINGREPAIR_WORKSPACE") ?? folder?.FullName ?? throw new InvalidOperationException("作業フォルダーを指定してください。"));
+        SettingsFile=Path.GetFullPath(Option("--settings") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ReadingRepair","settings.json"));
     }
     string Python()
     {
@@ -23,13 +23,17 @@ internal sealed class Backend
         {
             try { var value=JsonNode.Parse(File.ReadAllText(SettingsFile))?["python"]?.GetValue<string>(); if(!string.IsNullOrWhiteSpace(value) && File.Exists(value)) return value; } catch { }
         }
+        var local=Path.Combine(Workspace,".venv","Scripts","python.exe");
+        if(File.Exists(local))return local;
         var path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Programs","Python","Python312","python.exe");
         return File.Exists(path) ? path : "python";
     }
     public async Task<JsonNode> Call(string command,JsonNode? payload=null,string? job=null,Action<JsonObject>? progress=null,params string[] options)
     {
-        var start=new ProcessStartInfo(Python()) { UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardInputEncoding=new UTF8Encoding(false),StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=Workspace };
-        foreach(var arg in new[]{"-X","utf8","-u",Path.Combine(Workspace,"tools","PronunciationDictionaryLab","application.py"),command,"--workspace",Workspace,"--settings",SettingsFile}) start.ArgumentList.Add(arg);
+        var bundled=Path.Combine(Workspace,"backend","ReadingRepair.Backend.exe");
+        var start=new ProcessStartInfo(File.Exists(bundled) ? bundled : Python()) { UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardInputEncoding=new UTF8Encoding(false),StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=Workspace };
+        if(!File.Exists(bundled))foreach(var arg in new[]{"-X","utf8","-u",Path.Combine(Workspace,"backend","application.py")})start.ArgumentList.Add(arg);
+        foreach(var arg in new[]{command,"--workspace",Workspace,"--settings",SettingsFile})start.ArgumentList.Add(arg);
         if(job!=null) { start.ArgumentList.Add("--job");start.ArgumentList.Add(job); }
         if(payload!=null) start.ArgumentList.Add("--stdin");
         foreach(var option in options) start.ArgumentList.Add(option);

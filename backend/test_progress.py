@@ -17,7 +17,7 @@ class ProgressTests(unittest.TestCase):
             s=Simulation(Path(directory),False);s.execute()
             folder=s.args.run_dir;before=(folder/'progress.jsonl').read_bytes()
             text=progress_log.read(folder)['text']
-            for expected in ('全文の読み：カミテ','VoiSonaの発音：上手 → ジョーズ','音声から認識した文章：ジョーズ','食い違い候補「上手」','キー未設定','辞書登録・再生成を保留'):
+            for expected in ('全文の読み：カミテ','TTSの発音：上手 → ジョーズ','音声から認識した文章：ジョーズ','食い違い候補「上手」','キー未設定','辞書登録・再生成を保留'):
                 self.assertIn(expected,text)
             s.answer('カミテ');s.execute()
             self.assertTrue((folder/'progress.jsonl').read_bytes().startswith(before))

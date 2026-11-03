@@ -1,16 +1,17 @@
 #requires -Version 7.0
-param([string]$SettingsFile, [switch]$NoBuild)
+param([string]$SettingsFile,[switch]$NoBuild)
 $ErrorActionPreference='Stop'
-$workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-if(!$NoBuild){
-    dotnet build (Join-Path $PSScriptRoot 'Registration/Registration.csproj') -p:NuGetAudit=false --nologo
-    if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-    dotnet build (Join-Path $PSScriptRoot 'Desktop/ReadingRepair.Desktop.csproj') -p:NuGetAudit=false --nologo
-    if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+$app=Join-Path $PSScriptRoot 'ReadingRepair.exe'
+if(!(Test-Path -LiteralPath $app)) {
+    if(!$NoBuild){
+        foreach($project in @('Registration/Registration.csproj','Desktop/ReadingRepair.Desktop.csproj')){
+            dotnet build (Join-Path $PSScriptRoot $project) -p:NuGetAudit=false --nologo
+            if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+        }
+    }
+    $app=Join-Path $PSScriptRoot 'Desktop/bin/Debug/net10.0-windows/ReadingRepair.exe'
 }
-$app=Join-Path $PSScriptRoot 'Desktop/bin/ReadingRepair/Debug/net10.0-windows/VoisonaReadingRepair.exe'
-if(!(Test-Path -LiteralPath $app)){throw 'アプリを先にビルドしてください。'}
-$arguments=@('--workspace',$workspace)
+if(!(Test-Path -LiteralPath $app)){throw 'アプリをビルドするか配布版を展開してください。'}
+$arguments=@('--workspace',$PSScriptRoot)
 if($SettingsFile){$arguments+=@('--settings',[IO.Path]::GetFullPath($SettingsFile))}
-# UIを操作するためのアプリ起動。通常のバックグラウンドヘルパーとは別に表示する。
 Start-Process -FilePath $app -ArgumentList ($arguments | ForEach-Object {'"'+$_+'"'}) -WindowStyle Normal

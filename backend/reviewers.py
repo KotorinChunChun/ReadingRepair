@@ -15,7 +15,7 @@ import urllib.parse
 import urllib.request
 import llm_records
 
-DEFAULT_ENV = Path('C:/AI/env/voisona-reading-review.env')
+DEFAULT_ENV = Path('C:/AI/env/ReadingRepair/reviewers.env')
 PROMPT = '''日本語の読みを独立して判断してください。他モデルの回答は渡していません。
 外部ツールを使わず、入力の原文・登録済みユーザー辞書の全件テーブル・対象語だけから考えてください。
 登録済みの語は登録順の上位の読みを優先し、未登録語は文脈を確認してください。人名などで確定できない場合はuncertainをtrueにしてください。

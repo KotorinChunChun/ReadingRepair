@@ -1,7 +1,9 @@
 #requires -Version 7.0
 param(
-    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log')][string]$Command='doctor',
+    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log','engines','synthesize','transcribe','version')][string]$Command='doctor',
     [string]$Job,
+    [string]$OutputFile,
+    [string]$AudioFile,
     [string]$TextFile,
     [string]$RequestFile,
     [string]$SettingsFile,
@@ -23,7 +25,16 @@ if($Build){
     }
 }
 if($Command -in @('execute','status','answer','stop','audio','export','log','llm-log') -and !$Job){throw '実行IDを-Jobで指定してください。'}
-$arguments=@((Join-Path $PSScriptRoot 'application.py'),$Command)
+$bundled=Join-Path $PSScriptRoot 'backend/ReadingRepair.Backend.exe'
+if(Test-Path -LiteralPath $bundled){$Python=$bundled;$arguments=@($Command)}
+else {
+    $localPython=Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
+    if(Test-Path -LiteralPath $localPython){$Python=$localPython}
+    $arguments=@((Join-Path $PSScriptRoot 'backend/application.py'),$Command)
+}
+$arguments+=@('--workspace',$PSScriptRoot)
+if($OutputFile){$arguments+=@('--output',[IO.Path]::GetFullPath($OutputFile))}
+if($AudioFile){$arguments+=@('--audio-file',[IO.Path]::GetFullPath($AudioFile))}
 if($Job){$arguments+=@('--job',$Job)}
 if($TextFile){$arguments+=@('--text-file',[IO.Path]::GetFullPath($TextFile),'--mode',$Mode)}
 if($RequestFile){$arguments+=@('--request',[IO.Path]::GetFullPath($RequestFile))}

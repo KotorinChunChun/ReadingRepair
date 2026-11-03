@@ -40,7 +40,8 @@ public partial class MainWindow : Window
     };
     static readonly Dictionary<string,string> SettingLabels = new()
     {
-        ["python"]="Python実行ファイル",["project_root"]="VoiSona接続設定のフォルダー",["runs_root"]="検証結果の保存先",
+        ["python"]="Python実行ファイル（開発時）",
+        ["tts_engine"]="TTSエンジン（voisona / http-wav）",["tts_profile"]="API辞書プロファイル",["tts_env"]="TTS接続の外部設定ファイル",["api_dictionary_file"]="HTTP TTS用JSON辞書",["runs_root"]="検証結果の保存先",
         ["whisper_model"]="Whisperモデル",["whisper_site_packages"]="Whisperライブラリのフォルダー",["reviewer_env"]="外部モデルの設定ファイル",
         ["dictionary_file"]="VoiSonaユーザー辞書",["llm_model"]="一次LLMモデル",["voice"]="ボイス",["voice_version"]="ボイスのバージョン",
         ["gemini_transport"]="Gemini接続方式（api / cli）",["review_timeout"]="外部モデルの待機時間（秒）"
@@ -48,13 +49,13 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        InitializeComponent();
+        InitializeComponent();Title=WindowTitle.Create();
         // 既存の左側ウィンドウを動かさず、使用可能な領域の右側へ表示する。
         var work=SystemParameters.WorkArea;
         MinWidth=800;Width=Math.Max(MinWidth,work.Width/2);Height=work.Height;
         Left=work.Right-Width;Top=work.Top;
         backend=new Backend(); SettingsGrid.ItemsSource=settings;
-        Loaded += async (_,_) => await Safe(async () => { await ReloadSettings();await RefreshHistory();await ReloadDictionary(); });
+
         Closing += (_,e) =>
         {
             if(busy) { e.Cancel=true; _=Safe(RequestStop);StatusText.Text="停止を要求しました。処理の停止後に終了してください。"; }
@@ -62,10 +63,13 @@ public partial class MainWindow : Window
         };
     }
 
+    internal Task InitializeBackend()=>Safe(async ()=>{await ReloadSettings();await RefreshHistory();await ReloadDictionary();IsReady=true;});
+    internal bool IsBusy => busy;
+    internal bool IsReady { get; private set; }
     async Task Safe(Func<Task> action)
     {
         try { await action(); }
-        catch(Exception ex) { StatusText.Text=ex.Message;MessageBox.Show(this,ex.Message,"読み自己修復",MessageBoxButton.OK,MessageBoxImage.Information); }
+        catch(Exception ex) { StatusText.Text=ex.Message;MessageBox.Show(this,ex.Message,WindowTitle.Create("確認"),MessageBoxButton.OK,MessageBoxImage.Information); }
     }
     void Busy(bool value)
     {
@@ -233,8 +237,8 @@ public partial class MainWindow : Window
         var q=question.Data;QuestionContext.Text=Text(q["context"]);
         var providerStates=new Dictionary<string,string> { ["ok"]="応答取得",["unavailable"]="照会失敗",["disabled"]="無効",["not_configured"]="キー未設定" };
         var tts=string.Join(" / ",q["tts_readings"]?.AsArray().Select(Text) ?? []);
-        var explanation=Text(q["tts_status"]) switch {"recalculated"=>"保存済みTTS解析を再照合", "unmapped"=>"解析は取得済みですが対象語に対応づけできません", "not_recorded"=>"TTS解析が未取得",_=>"TTS解析の発音"};
-        var lines=new List<string> {$"一次LLMの仮説（{Text(q["primary_model"])}）："+string.Join(" / ",q["primary_readings"]?.AsArray().Select(Text) ?? []),$"VoiSonaの発音：{(tts.Length>0 ? tts:"未確定")}（{explanation}）"};
+        var explanation=Text(q["tts_status"]) switch {"recalculated"=>"保存済みTTS解析を再照合", "unsupported"=>"選択したエンジンは発音解析に非対応。Whisperの結果を参照してください。","unmapped"=>"解析は取得済みですが対象語に対応づけできません", "not_recorded"=>"TTS解析が未取得",_=>"TTS解析の発音"};
+        var lines=new List<string> {$"一次LLMの仮説（{Text(q["primary_model"])}）："+string.Join(" / ",q["primary_readings"]?.AsArray().Select(Text) ?? []),$"TTSの発音：{(tts.Length>0 ? tts:"未確定")}（{explanation}）"};
         lines.Add("Whisperの文字起こし："+(q["whisper_recorded"]?.GetValue<bool>()==true ? Text(q["whisper_text"]):"未実施"));
         lines.AddRange(q["opinions"]?.AsArray().Select(p=>$"{Text(p?["provider"])}（{Text(p?["model"])}）：{Text(p?["opinion"]?["reading"])}　{Text(p?["opinion"]?["reason"])}（{providerStates.GetValueOrDefault(Text(p?["status"]),Text(p?["status"]))}{(p?["http_status"]!=null ? " HTTP "+Text(p["http_status"]):"")}）") ?? []);
         lines.AddRange(q["votes"]?.AsArray().Select(v=>$"有効票：{Text(v?["provider"])} → {Text(v?["reading"])}") ?? []);

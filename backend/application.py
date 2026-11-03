@@ -19,10 +19,11 @@ import uuid
 import lab
 import progress_log
 import llm_records
+import tts_backends
 from adjudication import load_answers,tts_occurrences
 from reviewers import Config
 
-WORKSPACE = Path(__file__).resolve().parents[2]
+WORKSPACE = Path(sys.executable).resolve().parent.parent if getattr(sys,'frozen',False) else Path(__file__).resolve().parent.parent
 JOB_PATTERN = r'reading-repair-\d{8}-\d{6}-[0-9a-f]{8}'
 
 
@@ -69,20 +70,19 @@ def exclusive(path):
 class Application:
     def __init__(self, workspace=WORKSPACE, settings_file=None):
         self.workspace = Path(workspace).resolve()
-        base = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'VoisonaReadingRepair'
+        base = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'ReadingRepair'
         self.settings_file = Path(settings_file) if settings_file else base / 'settings.json'
 
     def defaults(self):
-        original = self.workspace if (self.workspace / '.env').is_file() else Path('C:/develop/VoisonaTalkAI')
-        packages = original / '.venvs/DESKTOP-PC3-kotorichun/Lib/site-packages'
-        return {'python': sys.executable, 'project_root': str(original),
-                'runs_root': str(self.workspace / 'dev/history/v0.4.0/logs'),
-                'whisper_model': 'C:/AI/Models/Speech/Whisper/VoisonaTalkAI/small',
-                'whisper_site_packages': str(packages) if packages.is_dir() else '',
-                'reviewer_env': 'C:/AI/env/voisona-reading-review.env',
-                'dictionary_file': str(Path(os.environ.get('APPDATA', '')) / 'Techno-Speech/VoiSona Talk/Talker/user_dict_ja_jp.dic'),
-                'llm_model': 'gpt-5.6-luna', 'voice': 'ui_ja_JP', 'voice_version': '2.0.0',
-                'gemini_transport': 'api', 'review_timeout': 45}
+        base = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'ReadingRepair'
+        return {'python': sys.executable, 'project_root': str(self.workspace),
+                'runs_root':str(base/'runs'), 'whisper_model':'C:/AI/Models/Speech/Whisper/VoisonaTalkAI/small',
+                'whisper_site_packages':'', 'reviewer_env':'C:/AI/env/ReadingRepair/reviewers.env',
+                'dictionary_file':str(Path(os.environ.get('APPDATA',''))/'Techno-Speech/VoiSona Talk/Talker/user_dict_ja_jp.dic'),
+                'api_dictionary_file':str(base/'dictionaries/http-wav/default.json'),
+                'tts_engine':'voisona', 'tts_profile':'default', 'tts_env':'C:/AI/env/ReadingRepair/tts.env',
+                'llm_model':'gpt-5.6-luna','voice':'ui_ja_JP','voice_version':'2.0.0',
+                'gemini_transport':'api','review_timeout':45}
 
     def settings(self):
         values = self.defaults()
@@ -106,12 +106,19 @@ class Application:
         for key in ('python', 'project_root', 'runs_root', 'whisper_model', 'reviewer_env', 'dictionary_file', 'llm_model', 'voice', 'voice_version'):
             if not values[key].strip():
                 raise ValueError(f'{key}を指定してください。')
+        if values['tts_engine'] not in tts_backends.ENGINES: raise ValueError('TTSエンジンはvoisona / http-wavです。')
+        if not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}',values['tts_profile']):raise ValueError('TTSプロファイルは英数字・ハイフン・アンダースコアで指定してください。')
         if values['gemini_transport'] not in ('api', 'cli'):
             raise ValueError('Gemini接続はapiまたはcliです。')
         return values
 
     def save_settings(self, payload):
-        values = self.settings(); values.update(payload)
+        values = self.settings()
+        if 'tts_profile' in payload and payload['tts_profile'] != values['tts_profile'] and 'api_dictionary_file' not in payload:
+            if not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}',str(payload['tts_profile'])):raise ValueError('TTSプロファイルの形式が不正です。')
+            base=Path(os.environ.get('LOCALAPPDATA',str(Path.home())))/'ReadingRepair/dictionaries/http-wav'
+            values['api_dictionary_file']=str(base/(payload['tts_profile']+'.json'))
+        values.update(payload)
         self.validate_settings(values)
         lab.save(self.settings_file, values)
         return values
@@ -120,9 +127,9 @@ class Application:
         return Path(self.settings()['runs_root']).resolve()
 
     def lock_file(self, settings=None):
-        dictionary = os.path.normcase(str(Path((settings or self.settings())['dictionary_file']).resolve()))
+        dictionary = os.path.normcase(str(tts_backends.dictionary_path(settings or self.settings()).resolve()))
         name = hashlib.sha256(dictionary.encode()).hexdigest()[:24]
-        base = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'VoisonaReadingRepair/locks'
+        base = Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'ReadingRepair/locks'
         return base / (name + '.lock')
 
     def directory(self, identifier):
@@ -208,7 +215,7 @@ class Application:
                     question['tts_status']='recorded' if row['tts_readings'] else 'not_recorded'
                     if not row['tts_readings'] and analysis.is_file():
                         question['tts_readings']=tts_occurrences(self.input_text(path,job),lab.load(analysis),row['surface'])
-                        question['tts_status']='recalculated' if question['tts_readings'] else 'unmapped'
+                        question['tts_status']='unsupported' if lab.load(analysis).get('supported') is False else 'recalculated' if question['tts_readings'] else 'unmapped'
                     transcript=path/(phase+'-whisper.json')
                     question['whisper_recorded']=transcript.is_file()
                     question['whisper_text']=lab.load(transcript)['text'] if transcript.is_file() else ''
@@ -329,7 +336,9 @@ class Application:
                 voice=settings['voice'], voice_version=settings['voice_version'], dictionary_file=Path(settings['dictionary_file']),
                 reviewer_env=Path(settings['reviewer_env']), answers_file=path / 'user-answers.json' if (path / 'user-answers.json').is_file() else None,
                 resume=(path / 'manifest.json').exists(), apply=job['mode'] == 'repair', prepare_only=job['mode'] == 'verify',
-                retry_reviewers=retry_reviewers, user_readings=job['known_readings'], app_managed=True)
+                retry_reviewers=retry_reviewers, user_readings=job['known_readings'], app_managed=True,
+                tts_engine=settings.get('tts_engine','voisona'), tts_profile=settings.get('tts_profile','default'),
+                tts_env=settings.get('tts_env',''), api_dictionary_file=settings.get('api_dictionary_file',''))
             try:
                 lab.run(args)
                 job['status'] = lab.load(path / 'manifest.json')['status']
@@ -366,12 +375,14 @@ class Application:
         return {'report':str(path / 'report/index.html')}
 
     def dictionary(self):
-        return lab.dictionary_view(Path(self.settings()['dictionary_file']))
+        tts_backends.create(self.settings())
+        return {**lab.dictionary_view(tts_backends.dictionary_path(self.settings())), 'engine':self.settings()['tts_engine']}
 
     def check_dictionary(self, payload):
         entries = payload.get('entries')
         if not entries: raise ValueError('追加する表記と読みを入力してください。')
-        return lab.dictionary_precheck(Path(self.settings()['dictionary_file']), entries)
+        tts_backends.create(self.settings())
+        return lab.dictionary_precheck(tts_backends.dictionary_path(self.settings()), entries)
 
     def add_dictionary(self, payload):
         expected = payload.get('dictionary_sha256', '')
@@ -380,7 +391,8 @@ class Application:
         settings = self.settings()
         with exclusive(self.lock_file(settings)):
             if not payload.get('entries'): raise ValueError('追加する表記と読みを入力してください。')
-            checked = lab.dictionary_precheck(Path(settings['dictionary_file']), payload['entries'])
+            backend = tts_backends.create(settings)
+            checked = lab.dictionary_precheck(tts_backends.dictionary_path(settings), payload['entries'])
             if checked['dictionary_sha256'] != expected:
                 return {'status':'dictionary_changed','precheck':checked,'message':'確認後に辞書が変更されました。最新の辞書で再確認してください。'}
             if checked['has_conflicts']: return {'status':'dictionary_conflict','precheck':checked}
@@ -389,34 +401,32 @@ class Application:
             folder = Path(settings['runs_root']).resolve() / identifier
             entries = [{k:row[k] for k in ('surface','reading')} for row in checked['entries']]
             lab.save(folder/'request.json', {'entries':entries,'dictionary_sha256':expected,'source':'利用者が確認して追加した辞書候補'})
-            registration = lab.register_entries(folder,Path(settings['dictionary_file']),'\n'.join(row['surface'] for row in entries),entries)
-            return {'status':'registered','precheck':checked,'registration':registration,'dictionary':lab.dictionary_view(Path(settings['dictionary_file'])),'record':str(folder)}
+            registration = backend.register(folder,'\n'.join(row['surface'] for row in entries),entries)
+            return {'status':'registered','precheck':checked,'registration':registration,'dictionary':lab.dictionary_view(tts_backends.dictionary_path(settings)),'record':str(folder)}
 
     def doctor(self):
         values = self.settings(); checks = []
         def check(name, ok, detail, required=True):
             checks.append({'name': name, 'status': 'ok' if ok else ('error' if required else 'warning'), 'detail': detail})
         check('Python', Path(values['python']).is_file() or bool(shutil.which(values['python'])), values['python'])
-        project = Path(values['project_root'])
-        check('VoiSona接続設定', (project / '.env').is_file(), str(project / '.env'))
-        check('一次LLMモジュール', (project / 'src/CodexChat.psm1').is_file(), str(project))
-        check('Codex CLI', bool(shutil.which('codex')), 'ログイン済みのCodex CLIを使用します。')
+        check('一次LLMモジュール', (Path(sys.executable).parent/'CodexClient.psm1').is_file() if getattr(sys,'frozen',False) else (lab.HERE/'CodexClient.psm1').is_file(), 'ReadingRepair同梱モジュール')
+        check('PowerShell 7',bool(shutil.which('pwsh')),'pwshが必要です。')
+        check('Codex CLI',bool(shutil.which('codex')) or (Path.home()/'.codex/.sandbox-bin/codex.exe').is_file(),'ログイン済みCodex CLIを使用します。')
         packages = values['whisper_site_packages']
         if packages:
             import site
             site.addsitedir(packages)
         check('Whisperライブラリ', importlib.util.find_spec('faster_whisper') is not None, packages or '現在のPython環境')
         check('Whisperモデル', (Path(values['whisper_model']) / 'model.bin').is_file(), values['whisper_model'])
-        helper = self.workspace / 'tools/PronunciationDictionaryLab/Registration/bin/Debug/net10.0-windows/Registration.dll'
-        check('辞書登録ヘルパー', helper.is_file(), str(helper))
+        if values['tts_engine']=='voisona':
+            try: check('辞書登録ヘルパー',True,' '.join(tts_backends.registration_command(lab.HERE)))
+            except ValueError as error: check('辞書登録ヘルパー',False,str(error))
         try:
-            dictionary = lab.dictionary_snapshot(Path(values['dictionary_file']), '')
-            check('ユーザー辞書', True, f'{len(dictionary["table"]["rows"])}件')
-        except Exception as error: check('ユーザー辞書', False, type(error).__name__)
-        try:
-            voices = lab.TalkApi(project / '.env', values['voice'], values['voice_version']).call('GET', 'voices')['items']
-            check('VoiSona REST API', bool(voices), '接続成功' if voices else 'ボイスがありません。')
-        except Exception as error: check('VoiSona REST API', False, type(error).__name__)
+            backend=tts_backends.create(values)
+            check('TTSエンジン',True,json.dumps(backend.preflight(),ensure_ascii=False))
+            dictionary=lab.dictionary_snapshot(tts_backends.dictionary_path(values),'')
+            check('ユーザー辞書',True,f'{len(dictionary["table"]["rows"])}件')
+        except Exception as error:check('TTSと辞書',False,str(error) if isinstance(error,(ValueError,RuntimeError)) else type(error).__name__)
         try:
             cfg = Config.load(Path(values['reviewer_env']))
             for name, provider in cfg.public().items():
@@ -427,13 +437,15 @@ class Application:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('settings', 'save-settings', 'doctor', 'create', 'execute', 'status', 'history', 'answer', 'stop', 'audio', 'export', 'dictionary', 'check-dictionary', 'add-dictionary', 'log', 'llm-log'))
+    parser.add_argument('command', choices=('settings', 'save-settings', 'doctor', 'create', 'execute', 'status', 'history', 'answer', 'stop', 'audio', 'export', 'dictionary', 'check-dictionary', 'add-dictionary', 'log', 'llm-log', 'engines', 'synthesize', 'transcribe', 'version'))
     parser.add_argument('--workspace', type=Path, default=WORKSPACE)
     parser.add_argument('--settings', type=Path)
     parser.add_argument('--job')
     parser.add_argument('--stdin', action='store_true', help='JSON要求を標準入力から読む')
     parser.add_argument('--request', type=Path)
     parser.add_argument('--text-file', type=Path)
+    parser.add_argument('--output',type=Path)
+    parser.add_argument('--audio-file',type=Path)
     parser.add_argument('--mode', choices=('repair', 'verify'), default='repair')
     parser.add_argument('--retry-reviewers', action='store_true')
     parser.add_argument('--apply', action='store_true', help='検証済み候補の適用を許可して再開する')
@@ -443,7 +455,25 @@ def main():
     try:
         payload = json.load(sys.stdin) if args.stdin else lab.load(args.request) if args.request else {}
         app = Application(args.workspace, args.settings)
-        if args.command == 'settings': result = app.settings()
+        if args.command == 'version':result={'name':'ReadingRepair','version':'0.0.1'}
+        elif args.command == 'engines': result=[{'id':tts_backends.VoiSonaBackend.id,**tts_backends.VoiSonaBackend.capabilities},{'id':tts_backends.HttpWavBackend.id,**tts_backends.HttpWavBackend.capabilities}]
+        elif args.command == 'synthesize':
+            if not args.text_file or not args.output:raise ValueError('--text-fileと--outputを指定してください。')
+            text=normalize_text(args.text_file.read_text(encoding='utf-8-sig'))
+            if not 1<=len(text)<=4000:raise ValueError('原文は1～4000文字です。')
+            if args.output.exists():raise ValueError('出力先が既に存在します。')
+            args.output.parent.mkdir(parents=True,exist_ok=True)
+            settings=app.settings()
+            with exclusive(app.lock_file(settings)):
+                backend=tts_backends.create(settings);backend.synthesize(text,args.output.resolve())
+                result={'engine':settings['tts_engine'],'path':str(args.output.resolve()),**lab.wav_info(args.output),'analysis':backend.analyze(text)}
+            if args.play:
+                import winsound
+                winsound.PlaySound(str(args.output.resolve()),winsound.SND_FILENAME)
+        elif args.command == 'transcribe':
+            if not args.audio_file:raise ValueError('--audio-fileを指定してください。')
+            settings=app.settings();result=lab.Whisper(settings['whisper_model'],settings['whisper_site_packages']).transcribe(args.audio_file)
+        elif args.command == 'settings': result = app.settings()
         elif args.command == 'save-settings': result = app.save_settings(payload)
         elif args.command == 'doctor': result = app.doctor()
         elif args.command == 'create':
