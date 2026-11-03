@@ -104,7 +104,9 @@ class HttpWavBackend:
         try:
             with urllib.request.build_opener(NoRedirect()).open(request,timeout=120) as response:
                 data=response.read(64*1024*1024+1)
-        except urllib.error.HTTPError as error:raise RuntimeError(f'HTTP TTSがHTTP {error.code}を返しました。応答本文は保存しません。') from None
+        except urllib.error.HTTPError as error:
+            code=error.code;error.close()
+            raise RuntimeError(f'HTTP TTSがHTTP {code}を返しました。応答本文は保存しません。') from None
         except Exception as error:raise RuntimeError('HTTP TTSへ接続できません。接続先・認証設定を確認してください。'+type(error).__name__) from None
         if len(data)>64*1024*1024:raise ValueError('TTS音声が64MiBを超えました。')
         import io
@@ -124,7 +126,9 @@ class HttpWavBackend:
         for row in checked['entries']:
             if row['state']=='new':value['entries'].append({'surface':row['surface'],'reading':row['reading']})
         lab.save(self.path,value)
-        return {'method':'ReadingRepair JSON辞書・音声化前の語句置換','engine':self.id,'entries':[{**row,'elapsedMs':0,'state':'registered' if row['state']=='new' else row['state']} for row in checked['entries']]}
+        verified=lab.dictionary_precheck(self.path,entries)
+        if verified['has_conflicts'] or any(row['state']=='new' for row in verified['entries']):raise RuntimeError('API用辞書の読戻しを確認できませんでした。')
+        return {'method':'ReadingRepair JSON辞書・音声化前の語句置換','engine':self.id,'entries':[{**row,'elapsedMs':None,'state':'registered' if row['state']=='new' else row['state']} for row in checked['entries']]}
 
 def create(settings,native_factory=None):
     engine=field(settings,'tts_engine','voisona')

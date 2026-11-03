@@ -21,7 +21,7 @@ internal sealed class Backend
     {
         if(File.Exists(SettingsFile))
         {
-            try { var value=JsonNode.Parse(File.ReadAllText(SettingsFile))?["python"]?.GetValue<string>(); if(!string.IsNullOrWhiteSpace(value) && File.Exists(value)) return value; } catch { }
+            try { var value=JsonNode.Parse(File.ReadAllText(SettingsFile))?["python"]?.GetValue<string>(); if(!string.IsNullOrWhiteSpace(value) && File.Exists(value) && !Path.GetFileName(value).Equals("ReadingRepair.Backend.exe",StringComparison.OrdinalIgnoreCase)) return value; } catch { }
         }
         var local=Path.Combine(Workspace,".venv","Scripts","python.exe");
         if(File.Exists(local))return local;

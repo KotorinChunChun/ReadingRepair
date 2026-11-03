@@ -1,17 +1,14 @@
-# VoiSona 読み自己修復
+# ReadingRepair
 
-VoiSona合成、Whisper文字起こし、LLMの読み比較、UIAによる辞書登録、登録後の再評価を行う独立Windowsアプリと共通CLIです。
+日本語TTSの読みを検証し、ユーザー辞書と音声を改善するWindowsアプリです。VoiSona Talkと、JSONを受け取りWAVを返すHTTP音声APIに対応します。
 
-```powershell
-pwsh -File .\tools\PronunciationDictionaryLab\Start-ReadingRepair.ps1
-```
+[最新版をダウンロード](https://github.com/KotorinChunChun/ReadingRepair/releases/latest)してZIPを展開し、`ReadingRepair.exe`を起動します。Pythonと.NETの実行環境を同梱しています。初期設定にはPowerShell 7、ログイン済みCodex CLI、ローカルWhisperモデル、使用するTTSの設定が必要です。
 
-CLIでビルド・診断する場合は`pwsh -File .\tools\PronunciationDictionaryLab\Invoke-ReadingRepair.ps1 doctor -Build`を使います。GUIを起動せずに実行できます。
+原文を入力して「変換の開始」を押すと、音声生成、Whisper文字起こし、複数モデルの読み比較、辞書登録、音声再生成、前後評価まで進みます。判断が分かれた語は確認待ちになり、各行から採用・不採用を選べます。完了後は「テスト再生」で音声を確認できます。
 
-画面から原文・指定読み・開始・停止・確認待ちへの回答・履歴・音声を操作できます。CLIは`application.py`の`doctor/create/execute/status/history/answer/stop/audio/export`です。既存の`Start-Lab.ps1`も継続利用できます。
+設定・履歴は`%LOCALAPPDATA%/ReadingRepair`へ保存します。認証情報はソース外の`.env`で指定します。原文と登録済み辞書は読み判定のため設定したLLMへ送信されます。自動評価は人間の聴取による正解保証ではありません。
 
-「ユーザー辞書」では現在の登録内容を取得し、表記と読みの追加前に重複・競合を確認できます。CLIは`dictionary/check-dictionary/add-dictionary`です。改行・空行を含む原文も処理でき、旧保存不具合で開始できなかった原文は、元のハッシュから内容を確認できる場合に再開できます。
-
-各ボタンに動作説明を付け、候補の各行は採用・不採用を1クリックで保存できます。判断は同じ読みの有効票2票以上を多数決で仮採用します。「LLM送受信」でモデル名とプロンプト・応答を読み、詳細経緯は`log`、送受信は`llm-log`でも取得できます。
-
-利用方法と評価の限界は[利用手順](../../docs/pronunciation-dictionary-lab.md)、版別の実験結果は[v0.4.0実装報告](../../dev/history/v0.4.0/v0.4.0-imp.md)を参照してください。
+- [使い方・CLI](docs/guide.md)
+- [TTS APIの接続・拡張](docs/tts-engines.md)
+- [開発・ビルド・検証](docs/development.md)
+- [ライセンス](LICENSE)

@@ -227,7 +227,8 @@ def stage_body(trial, stage):
         out.append(paragraph(f'登録方法は{item.get("method", item.get("state", "記録参照"))}です。新規登録は{len(registered)}件でした。'))
         out.append(candidate_table(entries))
         for entry in registered:
-            out.append(paragraph(f'{entry["surface"]}を{entry["reading"]}として登録し、辞書ファイルの読戻しで確認しました。登録時間は{entry["elapsedMs"] / 1000:.3f}秒です。'))
+            duration=f'登録時間は{entry["elapsedMs"] / 1000:.3f}秒です。' if entry.get('elapsedMs') is not None else '個別の登録時間は計測していません。'
+            out.append(paragraph(f'{entry["surface"]}を{entry["reading"]}として登録し、辞書ファイルの読戻しで確認しました。'+duration))
     return "".join(out) + details("この工程の記録データ", item)
 
 
