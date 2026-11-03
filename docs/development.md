@@ -34,7 +34,7 @@ faster-whisper 1.2.1はPyAV 19で廃止された引数を使うため、本版�
 
 専用の新規出力フォルダーへ.NET自己完結win-x64版、PyInstallerのPython backend、一次LLM呼出し用PowerShell、説明書、空設定例、ライセンスを許可リストで配置します。モデル・利用者設定・原文・辞書・ログ・キーを含めません。ZIPとSHA-256はreleaseへ出力し、版別logsへ検証結果を保存します。
 
-公開は`gh repo create`／`git push`／`gh release create`を、リリース許可があるときだけ行います。配布物を別配置へ展開し、doctor・合成・文字起こし・CLI・管理IPCを確認してから公開します。公開後はGitHubから再取得したZIPのハッシュを照合します。
+公開は`gh repo create`／`git push`／`gh release create`を、リリース許可があるときだけ行います。配布物を別配置へ展開し、doctor・合成・文字起こし・CLI・管理IPCを確認してから公開します。リリース後はGitHubから再取得したZIPのハッシュを照合します。非公開リポジトリでは認証付きで取得し、匿名取得したとは報告しません。一般配布がない間はdistributionStatusをunpublishedとして自動導入の対象へ含めません。
 
 ## 管理連携
 
