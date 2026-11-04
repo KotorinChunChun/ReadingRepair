@@ -457,7 +457,7 @@ def main():
     try:
         payload = json.load(sys.stdin) if args.stdin else lab.load(args.request) if args.request else {}
         app = Application(args.workspace, args.settings)
-        if args.command == 'version':result={'name':'ReadingRepair','version':'0.0.2'}
+        if args.command == 'version':result={'name':'ReadingRepair','version':'0.0.3'}
         elif args.command == 'engines': result=[{'id':tts_backends.VoiSonaBackend.id,**tts_backends.VoiSonaBackend.capabilities},{'id':tts_backends.HttpWavBackend.id,**tts_backends.HttpWavBackend.capabilities}]
         elif args.command == 'synthesize':
             if not args.text_file or not args.output:raise ValueError('--text-fileと--outputを指定してください。')

@@ -20,7 +20,8 @@ internal sealed class DictionaryAutoRefresh(Func<Task<JsonNode>> load, Action<Js
         // PythonのWindows normcase(resolve())に合わせる。リンク先も既存ファイルの実パスで解決する。
         var normalized=CanonicalPath(dictionary).ToLowerInvariant();
         var name=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalized))).ToLowerInvariant()[..24]+".lock";
-        var folder=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ReadingRepair","locks");
+        var local=Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var folder=Path.Combine(local,"ReadingRepair","locks");
         Directory.CreateDirectory(folder);
         var stream=new FileStream(Path.Combine(folder,name),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.ReadWrite);
         try

@@ -14,13 +14,17 @@ internal static class Program
     static string Root=>Option("--workspace");
     static string Settings=>Option("--settings");
     static string TestRoot=>Path.GetDirectoryName(Settings)!;
-    static string Python=>Path.Combine(Root,".venv","Scripts","python.exe");
+    static string? Optional(string name){var args=Environment.GetCommandLineArgs();var i=Array.IndexOf(args,name);return i>=0 && i+1<args.Length ? args[i+1] : null;}
+    static string Python=>Optional("--python") ?? Path.Combine(Root,".venv","Scripts","python.exe");
+    static string LockBackend=>Optional("--lock-backend") ?? Path.Combine(Root,"backend");
     static int assertions;
     static void Check(bool ok,string reason){if(!ok)throw new Exception(reason);assertions++;}
     static async Task<JsonNode> Cli(string command,JsonNode? input=null)
     {
-        var start=new ProcessStartInfo(Python){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardInputEncoding=new UTF8Encoding(false)};
-        foreach(var arg in new[]{"-X","utf8",Path.Combine(Root,"backend","application.py"),command,"--settings",Settings,"--workspace",Root})start.ArgumentList.Add(arg);
+        var bundled=Path.Combine(Root,"backend","ReadingRepair.Backend.exe");
+        var start=new ProcessStartInfo(File.Exists(bundled) ? bundled : Python){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardInputEncoding=new UTF8Encoding(false)};
+        if(!File.Exists(bundled))foreach(var arg in new[]{"-X","utf8",Path.Combine(Root,"backend","application.py")})start.ArgumentList.Add(arg);
+        foreach(var arg in new[]{command,"--settings",Settings,"--workspace",Root})start.ArgumentList.Add(arg);
         if(input!=null)start.ArgumentList.Add("--stdin");
         using var process=Process.Start(start)!;
         var output=process.StandardOutput.ReadToEndAsync();var error=process.StandardError.ReadToEndAsync();
@@ -68,7 +72,7 @@ internal static class Program
         await File.WriteAllTextAsync(lockScript,"import sys,time\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nfrom application import Application,exclusive\nimport lab,tts_backends\na=Application(settings_file=sys.argv[2])\nwith exclusive(a.lock_file()):\n p=tts_backends.dictionary_path(a.settings())\n d=lab.load(p)\n d['entries'].append({'surface':'平文','reading':'ヒラブン'})\n lab.save(p,d)\n Path(sys.argv[3]).write_text('held')\n while not Path(sys.argv[4]).exists(): time.sleep(.05)\n");
         var held=Path.Combine(TestRoot,"held");var release=Path.Combine(TestRoot,"release");
         var psi=new ProcessStartInfo(Python){UseShellExecute=false,CreateNoWindow=true};
-        foreach(var arg in new[]{"-X","utf8",lockScript,Path.Combine(Root,"backend"),Settings,held,release})psi.ArgumentList.Add(arg);
+        foreach(var arg in new[]{"-X","utf8",lockScript,LockBackend,Settings,held,release})psi.ArgumentList.Add(arg);
         using(var process=Process.Start(psi)!)
         {
             try

@@ -45,7 +45,7 @@ public partial class App : Application
                     for(var i=0;i<VisualTreeHelper.GetChildrenCount(root);i++)foreach(var child in Descendants(VisualTreeHelper.GetChild(root,i)))yield return child;
                 }
                 var buttons=Descendants(window).OfType<Button>().Where(b=>b.Content is string).Select(b=>new {name=b.Content!.ToString(),tooltip=b.ToolTip is not null,enabled=b.IsEnabled}).ToArray();
-                var result=new {name="ReadingRepair",version="0.0.2",title=window.Title,ready=window.IsReady,buttons};
+                var result=new {name="ReadingRepair",version="0.0.3",title=window.Title,ready=window.IsReady,buttons};
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(report))!);
                 await File.WriteAllTextAsync(report,JsonSerializer.Serialize(result,new JsonSerializerOptions {WriteIndented=true}));
                 Shutdown(window.IsReady && buttons.Length>0 && buttons.All(b=>b.tooltip) ? 0:1);

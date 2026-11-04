@@ -21,9 +21,9 @@ CLI検証と送信量比較の入口はscripts/Validate-ScopedPrompts.pyです�
 
 ```powershell
 Set-Location C:\develop\KotorinToys\tools\ReadingRepair
-./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --output dev/history/v0.0.1/logs/prompt-check-new
-./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --output dev/history/v0.0.1/logs/prompt-check-live-new
-./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --case locked --compare-asr --output dev/history/v0.0.1/logs/prompt-check-asr-new
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --output dev/history/v0.0.3/logs/prompt-check-new
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --output dev/history/v0.0.3/logs/prompt-check-live-new
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --case locked --compare-asr --output dev/history/v0.0.3/logs/prompt-check-asr-new
 ```
 
 毎回、新しい出力先を使います。--dictionary-fileで実辞書を指定すると、その全件は送信せずローカルの本文サイズ比較だけへ使います。--liveは設定した一次モデルとGemini・Sarashinaへ新方式の入力を送ります。--compare-asrは試験用の固定文字起こしを実LLMで比較する追加試験です。実APIの障害は棄権として記録し、合格条件は同じ読みの有効2票または曖昧語の正しい確認待ちです。全APIの稼働成功と同一視しません。

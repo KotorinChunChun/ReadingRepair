@@ -88,7 +88,7 @@ scripts/Build-Release.ps1はtool.jsonの製品版を使い、新しいZIPとSHA2
 scripts/Build-Installer.ps1は、同じ版のZIPと明示したSHA-256、自己完結型の共通Maintenance、署名確認済みInno Setupコンパイラー、同じ採用ソースの.NET発行物を入力にします。backend・EXE・製品定義の版を照合し、標準Inno EXE・ReadingRepair-packages.json・ReadingRepair-SHA256SUMS.txtを新規出力へ生成します。
 
 ```powershell
-$build=Get-Content ./release/v0.0.2/build-result.json -Raw | ConvertFrom-Json
+$build=Get-Content ./release/v0.0.3/build-result.json -Raw | ConvertFrom-Json
 ./scripts/Build-Installer.ps1 -PortableArchive $build.archive -ExpectedArchiveSha256 $build.sha256 -MaintenanceDirectory <共通Maintenanceの自己完結出力> -Compiler <署名確認済みISCC.exe> -ApplicationDirectory $build.bundle -RegistrationDirectory (Join-Path $build.bundle registration)
 ```
 
