@@ -161,4 +161,89 @@ class ScopedTransportTests(unittest.TestCase):
                 client.ask('comparison-1-2',COMPARE_INSTRUCTION,{'original':'雨衣','whisper_transcript':transcript})
 
 
+class ScopedValidationRetryTests(unittest.TestCase):
+    def test_missing_word_retries_once_without_expected_reading_or_full_table(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);client=Llm(root,'test',root,table(('原文外','ゲンブンガイ')))
+            replies=[{'segments':[{'id':'u1','reading':'タツ','words':[]}]},
+                     {'segments':[{'id':'u1','reading':'タツ','words':[{'surface':'立つ','reading':'タツ'}]}]}]
+            def respond(command,**kwargs):
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                self.assertNotIn('原文外',prompt)
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(replies.pop(0)),encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond) as transport:
+                result=client.ask('reference','',{'original':'立つ'})
+            self.assertEqual(transport.call_count,2)
+            self.assertEqual(result['reading'],'タツ')
+            self.assertTrue((root/'llm/reference.validation.json').is_file())
+
+    def test_still_missing_word_is_rejected_after_one_retry(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);client=Llm(root,'test',root,{'rows':[]})
+            def respond(command,**kwargs):
+                Path(command[command.index('-OutputFile')+1]).write_text('{"segments":[{"id":"u1","reading":"タツ","words":[]}]}',encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond) as transport,self.assertRaises(ValueError):
+                client.ask('reference','',{'original':'立つ'})
+            self.assertEqual(transport.call_count,2)
+
+
+class ScopedPipelineTests(unittest.TestCase):
+    def test_real_prompt_builder_runs_registration_and_two_evaluations(self):
+        import tempfile
+        import io
+        from pathlib import Path
+        from contextlib import ExitStack,redirect_stdout
+        from unittest.mock import patch
+        import lab
+        import llm_records
+        from reviewers import Config,ReviewClients
+        from test_pipeline import Simulation
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);simulation=Simulation(root)
+            simulation.args.dictionary_file.write_text('原文外 [ゲンブンガイ] ACCENT="0"\n',encoding='utf-8')
+            prompts=[]
+            def transport(command,**kwargs):
+                if command[0]=='dotnet':return simulation.subprocess(command,**kwargs)
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                self.assertNotIn('原文外',prompt);prompts.append(prompt)
+                payload=json.loads(prompt.split('入力JSON:\n')[-1])
+                if 'segments' in payload:
+                    value={'segments':[{'id':'u1','reading':'カミテ','words':[{'surface':'上手','reading':'カミテ'}]}]}
+                else:
+                    observed=payload['whisper_transcript'];error=observed!='カミテ'
+                    value={'observed_reading':observed,'score':40 if error else 100,'explanation':'模擬の比較応答',
+                           'errors':[{'surface':'上手','expected_reading':'カミテ','observed_reading':observed,'evidence':'模擬の音声認識'}] if error else []}
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(value),encoding='utf-8')
+            def review(prompt):
+                self.assertNotIn('原文外',prompt)
+                self.assertEqual(json.loads(prompt.split('入力JSON:\n')[-1])['targets'],['上手'])
+                return {'opinions':[{'surface':'上手','reading':'カミテ','reason':'模擬の独立意見','uncertain':False}]},'simulation'
+            with ExitStack() as stack:
+                stack.enter_context(patch('lab.HERE',root))
+                stack.enter_context(patch('lab.TalkApi',lambda *a:simulation))
+                stack.enter_context(patch('lab.Whisper',lambda *a:simulation))
+                stack.enter_context(patch('lab.subprocess.run',side_effect=transport))
+                stack.enter_context(patch('lab.Config.load',return_value=Config(gemini_key='test-g',sarashina_key='test-s')))
+                stack.enter_context(patch.object(ReviewClients,'gemini',side_effect=review))
+                stack.enter_context(patch.object(ReviewClients,'sarashina',side_effect=review))
+                stack.enter_context(redirect_stdout(io.StringIO()))
+                lab.run(simulation.args)
+            self.assertEqual(lab.load(simulation.args.run_dir/'manifest.json')['status'],'completed')
+            summary=lab.load(simulation.args.run_dir/'summary.json')
+            self.assertEqual((summary['before']['llm_score'],summary['after']['llm_score']),(40,100))
+            self.assertEqual((simulation.registrations,simulation.syntheses),(1,2))
+            self.assertEqual(len(prompts),3) # 基準1回＋比較2回。登録計画のLLMは不要。
+            self.assertEqual(len(llm_records.read(simulation.args.run_dir)['calls']),5)
+            for call in llm_records.read(simulation.args.run_dir)['calls']:
+                self.assertEqual(call['prompt_utf8_bytes'],len(call['request'].encode('utf-8')))
+
+
 if __name__=='__main__':unittest.main()

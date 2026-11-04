@@ -17,3 +17,15 @@ Whisper比較には原文・確定した基準・元の文字起こしを渡し�
 入力契約はlocally-resolved-reading.v3です。旧契約の実行は新規ジョブでやり直します。過去の原文・音声・評価・送受信記録は保持します。送受信記録のprompt_charactersとprompt_utf8_bytesは実プロンプトの文字数とUTF-8バイト数であり、モデルごとのトークン数や料金ではありません。
 
 CLI検証と送信量比較の入口はscripts/Validate-ScopedPrompts.pyです。実LLM試験は--liveで明示します。旧方式の全件プロンプトはサイズ計算のためローカルで生成するだけで、再送しません。
+
+
+```powershell
+Set-Location C:\develop\KotorinToys\tools\ReadingRepair
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --output dev/history/v0.0.1/logs/prompt-check-new
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --output dev/history/v0.0.1/logs/prompt-check-live-new
+./.venv/Scripts/python.exe scripts/Validate-ScopedPrompts.py --live --case locked --compare-asr --output dev/history/v0.0.1/logs/prompt-check-asr-new
+```
+
+毎回、新しい出力先を使います。--dictionary-fileで実辞書を指定すると、その全件は送信せずローカルの本文サイズ比較だけへ使います。--liveは設定した一次モデルとGemini・Sarashinaへ新方式の入力を送ります。--compare-asrは試験用の固定文字起こしを実LLMで比較する追加試験です。実APIの障害は棄権として記録し、合格条件は同じ読みの有効2票または曖昧語の正しい確認待ちです。全APIの稼働成功と同一視しません。
+
+区間の応答が対象語を省略した場合、同じモデルへ形式訂正を一度だけ要求します。期待する読みや別モデルの答えは渡さず、二回目も不正なら停止します。追加の要求も送受信記録へ残します。

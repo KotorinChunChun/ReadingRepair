@@ -383,7 +383,16 @@ class Llm:
             raw={'segments':[]}
             record=llm_records.begin(folder,'primary','reference-1' if name=='reference' else name,'local-dictionary',None)
             llm_records.finish(record,'locally_resolved',response_kind='local_derivation')
-        result=plan.merge(raw)
+        try:
+            result=plan.merge(raw)
+        except ValueError as error:
+            if not plan.queries:raise
+            reason=str(error)
+            save(folder/(name+'.validation.json'),{'status':'rejected','reason':reason,'retry':name+'-retry'})
+            # 同じモデルへ形式の訂正を一度だけ要求する。期待読み・他モデルの回答は与えない。
+            corrected=self._send(name+'-retry',SEGMENT_REFERENCE_INSTRUCTION+'\n前回の応答が区間契約に合いませんでした。全区間・全対象語を省略せず、形式を訂正してください。',
+                                 {**plan.request(),'validation_error':reason,'previous_response':raw})
+            result=plan.merge(corrected)
         save(folder/(name+'.merged.json'),result)
         return result
 
