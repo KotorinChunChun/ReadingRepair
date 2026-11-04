@@ -10,6 +10,8 @@ GitHub ReleasesからReadingRepair-0.0.1-setup.exeを直接取得することも
 
 Windows 11 x64を対象とします。配布ZIPは任意のフォルダーへ展開して使えます。旧VoisonaTalkAIやKotorinToys本体のソースは不要です。
 
+初回は[モデル取得・接続・辞書作成を含む手順](first-run.md)を参照してください。配布版を使う場合、Pythonや.NET SDKの別インストールは不要です。Whisperライブラリとモデル本体は別で、モデルは外部に配置します。
+
 1. PowerShell 7とCodex CLIを用意し、`codex login`で一次LLMを使用可能にします。
 2. faster-whisper形式のモデルを準備して「設定」のWhisperモデルに指定します。モデルは配布しません。
 3. `tts.env.example`と`reviewers.env.example`をソース外へコピーし、キーを設定します。既定先は`C:/AI/env/ReadingRepair/tts.env`と`reviewers.env`です。
@@ -17,11 +19,15 @@ Windows 11 x64を対象とします。配布ZIPは任意のフォルダーへ展
 
 VoiSona Talkは起動済みのローカルREST APIを使用します。ネイティブ辞書への新規登録だけはVoiSonaの画面をUIA/SendMessageで操作します。既存辞書を書き換えるために直接ファイル編集することはありません。
 
+初回でネイティブ辞書がない場合は`Initialize-VoisonaDictionary.ps1`で空の辞書を新規作成できます。既存ファイルは保持します。登録ヘルパーは通常表示の背面ウィンドウへメッセージを送り、最小化中なら復元します。実マウス・キーボードでの入力は使いません。
+
 HTTP TTSは[エンジン接続](tts-engines.md)を参照してください。API固有の設定は利用者が指定します。
 
 ## 変換と確認
 
 「変換の開始」は原文を保存し、辞書全件を添付した一次LLMの読み仮説、WAV生成、Whisper文字起こし、差分比較を行います。一次LLM・Gemini・Sarashinaの有効な同読み2票以上を仮採用し、採用候補を辞書と照合して登録・再生成します。照会失敗と判断不能は棄権です。
+
+`doctor`の`ready=true`だけでは独立した2票が揃うとは限りません。外部モデルが未設定なら、TTSとの差がある候補は確認待ちになります。実際の本人回答と指定読みを記録し、AIの推測を本人の回答や独立モデルの票として扱わないでください。
 
 確認待ちの語は各行の「採用」「不採用」で保存できます。文脈を限定したいときは「舞台の上手」のような語句と全体の読みを指定します。全候補の回答後、「回答を反映して再開」で登録・再生成へ進みます。不採用は登録しない判断であり、元の読みが正しいことの確定とは区別します。
 
@@ -58,6 +64,8 @@ pwshで展開先（開発時はリポジトリ）へ移動して実行します�
 ```
 
 APIキーはCLI引数・JSON要求へ入れません。設定変更は`save-settings -RequestFile`、読み回答はジョブの`answers-template.json`の形式を使います。手動追加には`check-dictionary`が返す`dictionary_sha256`と候補`entries`を渡します。
+
+独立した設定で試すときは、すべてのコマンドへ同じ`-SettingsFile`を渡し、`runs_root`も試験用へ分離します。`synthesize`は音声を作るだけで、自動修復を行いません。自動修復は`create -Mode repair`と`execute`を使用します。部分登録やLLM結果の形式検証で止まった場合の[確認・再開手順](first-run.md#失敗後の確認と再開)も参照してください。
 
 `backend/ReadingRepair.Backend.exe`は同じコマンドを直接受け付け、JSON Linesで進行と結果を返します。`--settings <ファイル>`、`--workspace <展開先>`、`--request <JSON>`を指定できます。GUIはこのCLIと同じ処理を呼びます。
 
