@@ -11,6 +11,10 @@
 
 `tts_env`に指定した外部ファイルで`VOISONA_BASE_URL`、`VOISONA_USER`、`VOISONA_PASSWORD`を設定します。URLはループバック専用です。ボイス名とバージョンはアプリ設定で指定します。`dictionary_file`にはVoiSonaの既存辞書を指定します。
 
+接続先の既定ポートは32766です。HTTP 401は認証未完了、`voices.items=[]`はAPIから利用できるボイスがない状態なので、VoiSona側のライブラリ取得を確認します。既定の設定値はインストール済みボイスを示しません。実際の`GET /api/talk/v1/voices`に含まれる`voice_name`と`voice_version`を使います。[初回設定](first-run.md)に秘密を表示しない確認例があります。
+
+辞書がない場合は`Initialize-VoisonaDictionary.ps1`で未作成のファイルだけを空のUTF-8辞書として作れます。語句の追加は同梱`ReadingRepair.Registration.exe`によるUIAと`SendMessageTimeout`を使い、直接追記はしません。最小化は復元しますが、アプリ未起動・対話セッション外・入力欄が取得できない状態では登録できません。途中まで登録できた語句は保持し、同じジョブの再開で残りを照合します。
+
 ## HTTP WAV API
 
 設定を`tts_engine=http-wav`にし、`tts_env`へ外部接続設定を指定します。`api_dictionary_file`は専用JSONファイルです。VoiSona辞書とは分離されます。`tts_profile`の変更だけをCLIで保存するとプロファイル別の既定辞書へ切り替わります。GUIで変更する場合はAPI用JSON辞書パスも指定してください。

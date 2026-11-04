@@ -47,7 +47,7 @@ if($definition.name -ne 'ReadingRepair' -or $definition.version -ne '0.0.1' -or 
 $definition.executable='ReadingRepair.exe'
 $definition.distributionStatus='published'
 $definition|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $payload 'tool.json') -Encoding utf8
-foreach($name in @('README.md','docs/guide.md','docs/development.md')){Copy-Item -LiteralPath (Join-Path $root $name) -Destination (Join-Path $payload $name)}
+& (Join-Path $PSScriptRoot 'Copy-SetupAssets.ps1') -Destination $payload
 Copy-Item -LiteralPath $maintenance -Destination (Join-Path $payload 'maintenance') -Recurse
 # ONNXの形状推論・量子化などの開発ツールは音声認識に使用しない。
 # 実行モジュールとVADモデルを残し、不要なソース配布を避ける。

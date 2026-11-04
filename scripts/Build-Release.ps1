@@ -18,11 +18,11 @@ dotnet publish (Join-Path $root 'Desktop/ReadingRepair.Desktop.csproj') -c Relea
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 dotnet publish (Join-Path $root 'Registration/Registration.csproj') -c Release -r win-x64 --self-contained true -p:NuGetAudit=false -o (Join-Path $bundle 'registration') --nologo
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
-foreach($file in @('README.md','LICENSE','THIRD-PARTY-NOTICES.md','Invoke-ReadingRepair.ps1','Start-ReadingRepair.ps1','tts.env.example','reviewers.env.example','sample.txt','requirements-build.txt','tool.json')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $bundle}
+foreach($file in @('LICENSE','THIRD-PARTY-NOTICES.md','Invoke-ReadingRepair.ps1','Start-ReadingRepair.ps1','tts.env.example','reviewers.env.example','sample.txt','requirements-build.txt','tool.json')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $bundle}
 $definition=Get-Content -LiteralPath (Join-Path $bundle 'tool.json') -Raw|ConvertFrom-Json
 $definition.executable='ReadingRepair.exe'
 $definition|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $bundle 'tool.json') -Encoding utf8
-Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $bundle -Recurse
+& (Join-Path $PSScriptRoot 'Copy-SetupAssets.ps1') -Destination $bundle
 & $python (Join-Path $root 'scripts/collect_licenses.py') $bundle
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 # 配布物からしか起動しない。利用者のデータは参照しないversion照合。
