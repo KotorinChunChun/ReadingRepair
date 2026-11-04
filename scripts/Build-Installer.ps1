@@ -75,6 +75,11 @@ foreach($config in Get-ChildItem -LiteralPath $payload -Recurse -File -Filter '*
 }
 $info=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $payload 'ReadingRepair.exe'))
 if($info.ProductName -ne 'ReadingRepair' -or "$($info.FileMajorPart).$($info.FileMinorPart).$($info.FileBuildPart)" -ne $productVersion){throw 'EXEの製品名・版が不正です。'}
+# .NET入力と共通Maintenanceのコピー後にもデバッグ情報を除外する。
+foreach($debugFile in Get-ChildItem -LiteralPath $payload -Recurse -File -Filter '*.pdb'){
+    if(!$debugFile.FullName.StartsWith($payloadPrefix,[StringComparison]::OrdinalIgnoreCase)){throw '出力外の削除を拒否しました。'}
+    Remove-Item -LiteralPath $debugFile.FullName
+}
 $before=@(Get-ChildItem -LiteralPath $payload -Recurse -File|ForEach-Object {
     [ordered]@{path=[IO.Path]::GetRelativePath($payload,$_.FullName).Replace('\','/');length=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 })

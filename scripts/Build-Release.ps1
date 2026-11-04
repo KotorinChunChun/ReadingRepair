@@ -44,6 +44,19 @@ foreach($item in $excluded){
     if(!$item.FullName.StartsWith($bundlePrefix,[StringComparison]::OrdinalIgnoreCase)){throw '生成領域外の削除を拒否しました。'}
     Remove-Item -LiteralPath $item.FullName -Recurse
 }
+# 自己完結.NETの再配布に必要な通知を、採用したNuGetパッケージから集約する。
+$nugetRoot=if($env:NUGET_PACKAGES){$env:NUGET_PACKAGES}else{Join-Path $env:USERPROFILE '.nuget/packages'}
+foreach($configuration in Get-ChildItem -LiteralPath $bundle -Recurse -File -Filter '*.runtimeconfig.json'){
+    $options=(Get-Content -LiteralPath $configuration.FullName -Raw|ConvertFrom-Json).runtimeOptions
+    foreach($framework in $options.includedFrameworks){
+        $package=Join-Path $nugetRoot ($framework.name.ToLowerInvariant()+'.runtime.win-x64/'+$framework.version)
+        $licenses=@(Get-ChildItem -LiteralPath $package -File|Where-Object Name -Match '^(LICENSE|THIRD-PARTY-NOTICES)(\.TXT)?$')
+        if(!$licenses.Count){throw 'ランタイムのライセンスを確認できません。'}
+        $target=Join-Path $bundle ('runtime-licenses/'+$framework.name+'/'+$framework.version)
+        [IO.Directory]::CreateDirectory($target)|Out-Null
+        foreach($license in $licenses){Copy-Item -LiteralPath $license.FullName -Destination $target -Force}
+    }
+}
 Compress-Archive -Path $bundle -DestinationPath $archive -CompressionLevel Optimal
 $hash=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $hash+'  '+[IO.Path]::GetFileName($archive)|Set-Content -LiteralPath (Join-Path $releaseRoot 'SHA256SUMS.txt') -Encoding utf8
