@@ -83,7 +83,7 @@ class ReadingInput:
         part={'start':start,'end':end,'text':text}
         if all(c.isspace() or unicodedata.category(c).startswith(('P','Z')) for c in text):
             part.update(reading='',source='punctuation')
-        elif re.fullmatch('[ァ-ヺー\s、。・！？!?]+',text):
+        elif re.fullmatch(r'[ァ-ヺー\s、。・！？!?]+',text):
             part.update(reading=kana(text),source='literal')
         else: part['id']='u'+str(1+sum(bool(p.get('id')) for p in self.parts))
         self.parts.append(part)

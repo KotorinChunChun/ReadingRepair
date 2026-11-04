@@ -24,7 +24,7 @@ STATES={'started':'開始','completed':'完了','reused':'保存済み結果を�
 
 def details(stage, value):
     if stage in ('known-readings','registered-readings'):
-        yield f'辞書全{len(value.get("table",{}).get("rows",[]))}件を取得。全件テーブルをLLMへ添付します。'
+        yield f'辞書全{len(value.get("table",{}).get("rows",[]))}件を取得。辞書はローカルで適用し、全件テーブルはLLMへ送信しません。'
         for row in value.get('words',[]): yield f'原文中の登録語：{row["surface"]}＝{row["reading"]}'
     elif stage.startswith('reference-'):
         yield '全文の読み：' + value['reading']

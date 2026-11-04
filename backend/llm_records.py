@@ -18,7 +18,10 @@ def begin(root,provider,stage,model,prompt,redact=lambda value:value):
     folder=Path(root)/'calls'/identifier;folder.mkdir(parents=True)
     metadata={'id':identifier,'provider':provider,'stage':stage,'model':model,'status':'running',
               'started_at':datetime.now(timezone.utc).isoformat(timespec='milliseconds'),'request_kind':'actual_prompt' if prompt is not None else 'not_sent'}
-    if prompt is not None:(folder/'request.txt').write_text(redact(prompt),encoding='utf-8',newline='\n')
+    if prompt is not None:
+        prompt=redact(prompt)
+        metadata.update(prompt_characters=len(prompt),prompt_utf8_bytes=len(prompt.encode('utf-8')))
+        (folder/'request.txt').write_text(prompt,encoding='utf-8',newline='\n')
     save(folder/'metadata.json',redact(metadata))
     return folder
 

@@ -104,20 +104,25 @@ class LabTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 dictionary_snapshot(path, "雨衣")
 
-    def test_every_llm_request_includes_full_table_and_priority_instructions(self):
-        table = {"columns": ["優先順位", "表記", "読み", "アクセント核"], "rows": [[1, "雨衣", "ウイ", 0], [2, "原文外", "ゲンブンガイ", 0]]}
+    def test_primary_requests_never_attach_full_dictionary(self):
+        table = {'columns':['優先順位','表記','読み','アクセント核'],'rows':[[1,'雨衣','ウイ',0],[2,'原文外','ゲンブンガイ',0]]}
         with tempfile.TemporaryDirectory() as directory:
-            llm = Llm(Path(directory), "test", Path(directory), table)
-            def fake_backend(command, **kwargs):
-                prompt = Path(command[command.index("-PromptFile") + 1]).read_text(encoding="utf-8")
-                self.assertIn(json.dumps(table, ensure_ascii=False), prompt)
-                self.assertIn("登録済みの読みを優先", prompt)
-                self.assertIn("修復せず", prompt)
-                Path(command[command.index("-OutputFile") + 1]).write_text('{"ok":true}', encoding="utf-8")
-            with patch("lab.subprocess.run", side_effect=fake_backend) as backend:
-                for name in ("reference", "comparison-1-2", "registration-plan", "comparison-1-3"):
-                    self.assertEqual(llm.ask(name, "検証", {"original": "雨衣"}), {"ok": True})
-                self.assertEqual(backend.call_count, 4)
+            llm=Llm(Path(directory),'test',Path(directory),table)
+            def fake_backend(command,**kwargs):
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                self.assertNotIn('原文外',prompt);self.assertNotIn(json.dumps(table,ensure_ascii=False),prompt)
+                self.assertIn('修復せず',prompt)
+                if 'segments' in json.loads(prompt.split('入力JSON:\n')[-1]):
+                    result={'segments':[{'id':'u1','reading':'トアタイ','words':[{'surface':'値','reading':'アタイ'}]}]}
+                else:result={'ok':True}
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(result),encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=fake_backend) as backend:
+                reference=llm.ask('reference','検証',{'original':'雨衣と値'})
+                self.assertEqual(reference['reading'],'ウイトアタイ')
+                self.assertIn({'surface':'雨衣','reading':'ウイ'},reference['words'])
+                for name in ('comparison-1-2','comparison-1-3'):
+                    self.assertEqual(llm.ask(name,'検証',{'original':'雨衣と値','whisper_transcript':'アマギヌトアタイ'}),{'ok':True})
+                self.assertEqual(backend.call_count,3)
 
     def test_llm_request_without_dictionary_snapshot_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -125,12 +130,15 @@ class LabTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 llm.build_prompt("検証", {})
 
-    def test_after_registration_prompt_uses_updated_table(self):
+    def test_after_registration_reference_uses_latest_dictionary_locally(self):
         with tempfile.TemporaryDirectory() as directory:
-            llm = Llm(Path(directory), "test", Path(directory), {"columns": [], "rows": []})
-            updated = {"columns": ["表記", "読み"], "rows": [["四月一日", "ワタヌキ"]]}
-            llm.dictionary_table = updated
-            self.assertIn(json.dumps(updated, ensure_ascii=False), llm.build_prompt("比較", {}))
+            llm=Llm(Path(directory),'test',Path(directory),{'rows':[]})
+            llm.dictionary_table={'rows':[[1,'四月一日','ワタヌキ',0]]}
+            with patch('lab.subprocess.run') as backend:
+                result=llm.ask('reference-final','比較',{'original':'四月一日'})
+            backend.assert_not_called()
+            self.assertEqual(result,{'reading':'ワタヌキ','words':[{'surface':'四月一日','reading':'ワタヌキ'}]})
+            self.assertNotIn('四月一日',llm.build_prompt('比較',{}))
 
     def test_reference_cannot_omit_or_override_registered_reading(self):
         hints = [{"surface": "雨衣", "reading": "ウイ"}]

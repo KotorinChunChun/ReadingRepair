@@ -26,7 +26,7 @@ class LlmRecordTests(unittest.TestCase):
             client.record_redact=Config(gemini_key='private-token').redact
             def run(command,**kwargs):
                 path=Path(command[command.index('-OutputFile')+1])
-                path.write_text('{"reading":"カミテ","words":[],"reason":"private-token"}',encoding='utf-8')
+                path.write_text('{"segments":[{"id":"u1","reading":"カミテ","words":[{"surface":"上手","reading":"カミテ"}]}],"reason":"private-token"}',encoding='utf-8')
                 return subprocess.CompletedProcess(command,0)
             with patch('lab.subprocess.run',side_effect=run):client.ask('reference','private-token',{'original':'上手'})
             calls=llm_records.read(root)['calls'];self.assertEqual(len(calls),1)
@@ -39,7 +39,7 @@ class LlmRecordTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);client=lab.Llm(root,'test',root,{'rows':[]})
             def run(command,**kwargs):
-                Path(command[command.index('-OutputFile')+1]).write_text('{"reading":"カミテ","words":[]}',encoding='utf-8')
+                Path(command[command.index('-OutputFile')+1]).write_text('{"segments":[{"id":"u1","reading":"カミテ","words":[{"surface":"上手","reading":"カミテ"}]}]}',encoding='utf-8')
             with patch('lab.subprocess.run',side_effect=run):client.ask('reference','初回',{'original':'上手'})
             with patch('lab.subprocess.run',side_effect=RuntimeError('transport failed')),self.assertRaises(RuntimeError):
                 client.ask('reference','再照会',{'original':'上手'})

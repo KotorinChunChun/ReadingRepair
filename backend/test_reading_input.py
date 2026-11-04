@@ -79,4 +79,86 @@ class ReadingInputTests(unittest.TestCase):
             self.assertEqual(getattr(ReadingInput('雨衣と値。',base),method)(),getattr(ReadingInput('雨衣と値。',expanded),method)())
 
 
+class ScopedTransportTests(unittest.TestCase):
+    def test_both_secondary_providers_only_get_unknown_targets(self):
+        from unittest.mock import patch
+        from reviewers import ReviewClients,Config
+        clients=ReviewClients(Config(gemini_key='test-g',sarashina_key='test-s'))
+        sent=[]
+        def respond(prompt):
+            sent.append(prompt)
+            return {'opinions':[{'surface':'上手','reading':'カミテ','reason':'舞台の文脈','uncertain':False}]},'test'
+        with patch.object(clients,'gemini',side_effect=respond),patch.object(clients,'sarashina',side_effect=respond):
+            result=clients.review('雨衣を着て舞台の上手へ。',table(('雨衣','ウイ'),('原文外','ゲンブンガイ')),['雨衣','上手'])
+        self.assertEqual(len(sent),2)
+        self.assertEqual(sent[0],sent[1])
+        for prompt in sent:
+            payload=json.loads(prompt.split('入力JSON:\n')[-1])
+            self.assertEqual(payload['targets'],['上手'])
+            self.assertNotIn('原文外',prompt)
+            self.assertNotIn('registered_user_dictionary',prompt)
+            self.assertIn('ウイを着て',prompt)
+        self.assertEqual(result['locally_resolved'],{'雨衣':'ウイ'})
+
+    def test_all_registered_targets_do_not_call_any_provider(self):
+        from unittest.mock import patch
+        from reviewers import ReviewClients,Config
+        clients=ReviewClients(Config(gemini_key='test-g',sarashina_key='test-s'))
+        with patch.object(clients,'gemini') as g,patch.object(clients,'sarashina') as s:
+            result=clients.review('雨衣と値',table(('雨衣','ウイ'),('値','アタイ')),['雨衣','値'])
+        g.assert_not_called();s.assert_not_called()
+        self.assertEqual(result['providers'],[])
+        self.assertEqual(result['input_metrics']['prompt_utf8_bytes'],0)
+
+    def test_registered_reading_is_not_a_vote_or_a_repair_of_tts_evidence(self):
+        from adjudication import candidates,decide
+        ref={'reading':'ウイ','words':[{'surface':'雨衣','reading':'ウイ'}]}
+        analysis={'analyzed_text':'<tsml><word pronunciation="アマギヌ">雨衣</word></tsml>'}
+        comparison={'errors':[{'surface':'雨衣','expected_reading':'ウイ','observed_reading':'アマギヌ','evidence':'試験'}]}
+        items=candidates('雨衣',ref,comparison,analysis)
+        items[0]['locally_resolved_reading']='ウイ'
+        review={'providers':[{'provider':p,'status':'ok','opinions':[{'surface':'雨衣','reading':'ウイ','uncertain':False}]} for p in ('gemini','sarashina')]}
+        row=decide(items,review,{})['decisions'][0]
+        self.assertEqual(row['votes'],[])
+        self.assertEqual(row['status'],'pending')
+        self.assertEqual(row['tts_readings'],['アマギヌ'])
+        self.assertEqual(row['asr_errors'][0]['observed_reading'],'アマギヌ')
+        self.assertFalse(row['needs_registration'])
+
+    def test_primary_reconstructs_phrase_and_word_separately(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            client=Llm(root,'test',root,table(('舞台の上手','ブタイノカミテ'),('上手','ジョウズ')))
+            def respond(command,**kwargs):
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                payload=json.loads(prompt.split('入力JSON:\n')[-1])
+                self.assertEqual([q['text'] for q in payload['segments']],['。歌が'])
+                result={'segments':[{'id':'u1','reading':'ウタガ','words':[{'surface':'歌','reading':'ウタ'}]}]}
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(result),encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond):
+                result=client.ask('reference','',{'original':'舞台の上手。歌が上手。'})
+            self.assertEqual(result['reading'],'ブタイノカミテウタガジョウズ')
+            self.assertIn({'surface':'上手','reading':'ジョウズ'},result['words'])
+            self.assertNotIn({'surface':'上手','reading':'カミテ'},result['words'])
+
+    def test_comparison_keeps_raw_whisper_without_dictionary_rewrite(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm,COMPARE_INSTRUCTION
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);client=Llm(root,'test',root,table(('雨衣','ウイ')))
+            transcript='アマギヌ'
+            def respond(command,**kwargs):
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                self.assertEqual(json.loads(prompt.split('入力JSON:\n')[-1])['whisper_transcript'],transcript)
+                Path(command[command.index('-OutputFile')+1]).write_text('{}',encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond):
+                client.ask('comparison-1-2',COMPARE_INSTRUCTION,{'original':'雨衣','whisper_transcript':transcript})
+
+
 if __name__=='__main__':unittest.main()

@@ -127,15 +127,17 @@ def load_answers(path, original, allowed_ids):
 def decide(items, review, answers):
     decisions, questions = [], []
     for item in items:
+        local=item.get('locally_resolved_reading')
         opinions = []
         for provider in review['providers']:
-            opinion = next((v for v in provider.get('opinions', []) if v['surface'] == item['surface']), None)
+            opinion = None if local else next((v for v in provider.get('opinions', []) if v['surface'] == item['surface']), None)
             opinions.append({'provider': provider['provider'], 'status': provider['status'], 'opinion': opinion,
                 'model':provider.get('model',review.get('configuration',{}).get(provider['provider'],{}).get('model','未記録')),
                 'http_status':provider.get('http_status')})
         answer = answers.get(item['id'])
         votes=[];abstentions=[]
-        if len(item['reference_readings'])==1:votes.append({'provider':'primary','reading':item['reference_readings'][0]})
+        if local:abstentions.append({'provider':'primary','reason':'登録済み読みはローカル適用であり独立票ではありません'})
+        elif len(item['reference_readings'])==1:votes.append({'provider':'primary','reading':item['reference_readings'][0]})
         else:abstentions.append({'provider':'primary','reason':'一次案の読みが一意ではありません'})
         for provider in opinions:
             opinion=provider['opinion']
@@ -150,6 +152,9 @@ def decide(items, review, answers):
             source = 'user'
             status = 'accepted' if answer['action'] == 'accept' else 'rejected'
             reading = answer.get('reading') if status == 'accepted' else None
+        elif local:
+            agrees=item['tts_readings'] and all(canonical(v)==canonical(local) for v in item['tts_readings']) and {canonical(v) for v in item['reference_readings']}=={canonical(local)}
+            source,reading,status=('registered_dictionary',local,'accepted') if agrees else ('registered_dictionary_mismatch',None,'pending')
         elif item['tts_readings'] and not item['tts_difference'] and len(item['reference_readings']) == 1 and not item.get('registered_reading_conflict'):
             # 読みが既に一致する場合、ASR差だけを理由に辞書を書き換えない。
             source, reading, status = 'tts_matches_reference', item['proposed_reading'], 'accepted'
@@ -162,7 +167,7 @@ def decide(items, review, answers):
         if status == 'accepted' and not registration:
             registration = {'surface': item['surface'], 'reading': reading}
         row = {**item, 'status': status, 'accepted_reading': reading, 'source': source,
-               'reason': answer['reason'] if answer else ('文字起こしとTTS解析を分けて記録' if source == 'tts_matches_reference' else f'有効票{len(votes)}票中{len(majority)}票が同じ読みのため、モデル多数決で仮採用' if source else f'有効票{len(votes)}票で同じ読みが2票以上一致しないため確認待ち'),
+               'reason': answer['reason'] if answer else ('登録済み読みをローカル適用。独立票へは加算しない。' if source=='registered_dictionary' else '登録済みの期待読みと実測が一致しないか確認できません。追加照会・重複登録をせず確認待ち。' if source=='registered_dictionary_mismatch' else '文字起こしとTTS解析を分けて記録' if source == 'tts_matches_reference' else f'有効票{len(votes)}票中{len(majority)}票が同じ読みのため、モデル多数決で仮採用' if source else f'有効票{len(votes)}票で同じ読みが2票以上一致しないため確認待ち'),
                'opinions': opinions, 'votes':votes,'abstentions':abstentions,'needs_registration': needs_registration, 'registration': registration}
         decisions.append(row)
         if status == 'pending':

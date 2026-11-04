@@ -93,7 +93,7 @@ class HistoryTests(unittest.TestCase):
             page = export([trial], root / "report")
             content = page.read_text(encoding="utf-8")
             self.assertIn("辞書添付と基準読みのみ確認", content)
-            self.assertIn("全2件のテーブル", content)
+            self.assertIn("全2件のローカルスナップショット", content)
             self.assertIn("<td>原文外</td>", content)
             self.assertIn("<th>アクセント核</th>", content)
 

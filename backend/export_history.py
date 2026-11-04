@@ -31,7 +31,7 @@ STAGES = (
     ("before-2-whisper", "Whisperの文字起こし 2"), ("comparison-1-2", "1と2の暫定比較"),
     ("secondary-review", "外部2モデルへの独立照会"), ("adjudication", "採用判断と確認待ち"),
     ("reference-adopted", "採用した読みの基準"), ("comparison-adopted-before", "採用基準による登録前の再評価"),
-    ("registration-plan", "LLMによる登録計画"), ("dictionary-precheck", "最新辞書との重複・競合チェック"), ("registration", "選択TTS用の辞書登録"),
+    ("registration-plan", "採用候補からの登録計画"), ("dictionary-precheck", "最新辞書との重複・競合チェック"), ("registration", "選択TTS用の辞書登録"),
     ("registered-readings", "登録後のユーザー辞書テーブル"),
     ("after-3-audio", "登録後のTTS音声"), ("after-3-whisper", "Whisperの文字起こし 3"),
     ("comparison-1-3", "1と3の比較・再評価"),
@@ -175,10 +175,10 @@ def stage_body(trial, stage):
         out.append(paragraph(data['manifest.json'].get('assumption', '旧実験：一次LLMの基準読みを正解とした評価です。')))
     elif stage in ("known-readings", "registered-readings"):
         pairs = "、".join(f'{w["surface"]}＝{w["reading"]}' for w in item["words"])
-        out.append(paragraph(f'既存辞書で確定している「{pairs}」をLLMの前提へ渡しました。Whisperへの正解ヒントには使っていません。'))
+        out.append(paragraph(f'既存辞書で確定している「{pairs}」をローカルの適用対象として記録しています。Whisperへの正解ヒントには使っていません。'))
         table = item.get("table")
         if table:
-            out.append(paragraph(f'原文にない語も含め、登録順を保った全{len(table["rows"])}件のテーブルを添付しています。'))
+            out.append(paragraph(f'登録順を保った全{len(table["rows"])}件のローカルスナップショットです。実際の送信内容はLLM送受信記録を参照してください。'))
             headings = "".join(f'<th>{e(column)}</th>' for column in table["columns"])
             rows = "".join('<tr>' + "".join(f'<td>{e(cell if cell is not None else "未記録")}</td>' for cell in row) + '</tr>' for row in table["rows"])
             out.append('<div class="table-wrap"><table><thead><tr>' + headings + '</tr></thead><tbody>' + rows + '</tbody></table></div>')
@@ -215,7 +215,8 @@ def stage_body(trial, stage):
         if not item['providers']:
             out.append(paragraph('外部照会が必要な発音差はありませんでした。'))
         else:
-            out.append(paragraph('外部モデルには原文・全件辞書・対象語だけを渡し、一次LLMや他モデルの回答は渡していません。'))
+            scoped='targets' in item.get('independent_payload',{})
+            out.append(paragraph('外部モデルには未確定語・必要な原文の文脈・その範囲の辞書適用結果だけを渡します。辞書全件や他モデルの回答は渡しません。' if scoped else 'この照会は旧形式の履歴です。当時の保存済み入力を表示します。'))
     elif stage.endswith('adjudication'):
         out.append(decision_body(item))
     elif stage == "registration-plan":
