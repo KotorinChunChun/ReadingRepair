@@ -65,7 +65,7 @@ faster-whisper 1.2.1はPyAV 19で廃止された引数を使うため、本版�
 ./scripts/Test-SetupAssets.ps1
 ```
 
-今回の資料・補助追加は次回ビルドの入力変更です。公開済みv0.0.1のタグ・ZIP・setupを置き換えず、モデルの取得は利用者による補助実行時だけに行います。インストール直後の完全自動修復には、外部モデルを含む接続設定と同読み2票以上が必要で、`doctor.ready=true`と区別します。
+資料・補助スクリプトはv0.0.2以降のZIP/setupへ同梱します。公開済みv0.0.1のタグ・ZIP・setupを置き換えず、モデルの取得は利用者による補助実行時だけに行います。インストール直後の完全自動修復には、外部モデルを含む接続設定と同読み2票以上が必要で、`doctor.ready=true`と区別します。
 
 公開は`gh repo create`／`git push`／`gh release create`を、リリース許可があるときだけ行います。配布物を別配置へ展開し、doctor・合成・文字起こし・CLI・管理IPCを確認してから公開します。リリース後はGitHubから再取得したZIPのハッシュを照合します。公開したZIPとsetupは認証なしで再取得して容量・ハッシュを照合します。
 
@@ -78,10 +78,13 @@ WPFのDispatcherを使う管理契約2の実装を子内に保持します。SID
 
 ## KotorinToys用インストーラー
 
-v0.0.1の既存ZIPとタグは変更しません。scripts/Build-Installer.ps1は、固定SHA-256のZIP、自己完結型の共通Maintenance、署名確認したInno Setupコンパイラーを入力に、新規の標準Inno EXE・ReadingRepair-packages.json・ReadingRepair-SHA256SUMS.txtを作ります。アプリのソースはv0.0.1と同じで、.NET部分は修正版10.0.14へ再発行します。Python backendは公開ZIPと同一です。導入定義・説明書を更新し、保守補助とランタイム通知を加えます。
+scripts/Build-Release.ps1はtool.jsonの製品版を使い、新しいZIPとSHA256SUMS.txtを生成します。既存ZIPは上書きしません。別の仮想環境を使う場合は-PythonExecutableで指定します。
+
+scripts/Build-Installer.ps1は、同じ版のZIPと明示したSHA-256、自己完結型の共通Maintenance、署名確認済みInno Setupコンパイラー、同じ採用ソースの.NET発行物を入力にします。backend・EXE・製品定義の版を照合し、標準Inno EXE・ReadingRepair-packages.json・ReadingRepair-SHA256SUMS.txtを新規出力へ生成します。
 
 ```powershell
-./scripts/Build-Installer.ps1 -PortableArchive ./release/v0.0.1/ReadingRepair-v0.0.1-win-x64.zip -MaintenanceDirectory <共通Maintenanceの自己完結出力> -Compiler <署名確認済みISCC.exe> -ApplicationDirectory <10.0.14再発行のWPF出力> -RegistrationDirectory <10.0.14再発行の登録ヘルパー出力>
+$build=Get-Content ./release/v0.0.2/build-result.json -Raw | ConvertFrom-Json
+./scripts/Build-Installer.ps1 -PortableArchive $build.archive -ExpectedArchiveSha256 $build.sha256 -MaintenanceDirectory <共通Maintenanceの自己完結出力> -Compiler <署名確認済みISCC.exe> -ApplicationDirectory $build.bundle -RegistrationDirectory (Join-Path $build.bundle registration)
 ```
 
-共通Maintenanceと標準テンプレートの採用ソースはKotorinToysの公開mainです。installer/product.issは採用した標準テンプレートのコピーを保持します。導入時はKotorinToys本体のインストールを必要とせず、setupだけで現在ユーザーへ導入できます。配布入力の秘密検査・本体の公開台帳照合・実導入検証を行ってから、新規アセットだけを既存Releaseへ追加します。
+共通Maintenanceと標準テンプレートの採用ソースはKotorinToysの公開mainです。installer/product.issは採用した標準テンプレートのコピーを保持します。導入時はKotorinToys本体のインストールを必要とせず、setupだけで現在ユーザーへ導入できます。配布入力の秘密検査・本体の公開台帳照合を行ってから公開します。既存v0.0.1のタグ・ZIP・setupは変更しません。

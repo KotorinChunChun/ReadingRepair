@@ -2,7 +2,7 @@
 
 配布版はPython実行環境、Whisperライブラリ、.NET実行環境を同梱しています。モデル本体、PowerShell 7、ログイン済みCodex CLI、使用するTTS本体・ボイス・認証情報は別途必要です。開発用Pythonや.NET SDKの導入は、ソースから開発する場合の[開発手順](development.md)を参照してください。
 
-ここで追加した2本の補助スクリプトと資料は、次回のZIP/setupビルドから同梱します。公開済みv0.0.1の配布物は置き換えません。旧配布物で使う場合は、この版のソースから`Install-WhisperModel.ps1`と`Initialize-VoisonaDictionary.ps1`を展開先へコピーしてください。これらは単独で実行できます。
+2本の補助スクリプトと資料は、v0.0.2以降のZIP/setupに同梱しています。公開済みv0.0.1の配布物は置き換えません。旧配布物で使う場合は、この版のソースから`Install-WhisperModel.ps1`と`Initialize-VoisonaDictionary.ps1`を展開先へコピーしてください。これらは単独で実行できます。
 
 ## 1. 起動場所と接続情報
 

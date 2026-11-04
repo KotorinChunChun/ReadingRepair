@@ -2,7 +2,7 @@
 
 - 独立Gitリポジトリ。親・隣接アプリ・旧VoisonaTalkAIを依存にしない。
 - PowerShellはpwsh。文書・コミットは日本語。
-- v0.0.1の要求・計画・報告はdev/history/v0.0.1/、生ログは同じ版のlogs/へ保存する。
+- 版別の要求・計画・報告はdev/history/vX.Y.Z/、生ログは対象版のlogs/へ保存する。
 - フェーズごとに関連テスト・ビルドを通してコミットする。
 - CLIを共通処理とし、画面操作はCLIで検証できない表示確認に限定する。
 - 名前はReadingRepair。独自窓タイトルはWindowTitle.Createから生成する。

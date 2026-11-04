@@ -1,5 +1,5 @@
 #requires -Version 7.0
-param([string]$Executable=(Join-Path $PSScriptRoot '../Desktop/bin/Debug/net10.0-windows/ReadingRepair.exe'),[string]$Output=(Join-Path $PSScriptRoot '../dev/history/v0.0.1/logs/desktop'))
+param([string]$Executable=(Join-Path $PSScriptRoot '../Desktop/bin/Debug/net10.0-windows/ReadingRepair.exe'),[string]$Output=(Join-Path $PSScriptRoot '../dev/history/v0.0.2/logs/desktop'))
 $ErrorActionPreference='Stop'
 $exe=[IO.Path]::GetFullPath($Executable);$out=[IO.Path]::GetFullPath($Output)
 [IO.Directory]::CreateDirectory($out)|Out-Null

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF>
-    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AssemblyName>ReadingRepair</AssemblyName><Version>0.0.1</Version><Product>ReadingRepair</Product><Authors>KotorinChunChun</Authors>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AssemblyName>ReadingRepair</AssemblyName><Version>0.0.2</Version><Product>ReadingRepair</Product><Authors>KotorinChunChun</Authors>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Update="Microsoft.NETCore.App;Microsoft.WindowsDesktop.App.WPF" RuntimeFrameworkVersion="10.0.14" Condition="'$(SelfContained)' == 'true'" />

@@ -1,14 +1,21 @@
 #requires -Version 7.0
-param([string]$OutputRoot=(Join-Path $PSScriptRoot '../release'))
+param(
+    [string]$OutputRoot=(Join-Path $PSScriptRoot '../release'),
+    [string]$PythonExecutable=(Join-Path $PSScriptRoot '../.venv/Scripts/python.exe')
+)
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $releaseRoot=[IO.Path]::GetFullPath($OutputRoot)
+$productVersion=(Get-Content -LiteralPath (Join-Path $root 'tool.json') -Raw|ConvertFrom-Json).version
+if($productVersion -notmatch '^\d+\.\d+\.\d+$'){throw '製品版は3桁の数値版が必要です。'}
+$archive=Join-Path $releaseRoot ('ReadingRepair-v'+$productVersion+'-win-x64.zip')
+if(Test-Path -LiteralPath $archive){throw '既存の配布ZIPは上書きしません。'}
 $buildId=Get-Date -Format 'yyyyMMdd-HHmmss'
 $stage=Join-Path $releaseRoot ('build-'+$buildId)
 $bundle=Join-Path $stage 'ReadingRepair'
 if(Test-Path -LiteralPath $stage){throw '新しい配布先を指定してください。'}
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
-$python=Join-Path $root '.venv/Scripts/python.exe'
+$python=[IO.Path]::GetFullPath($PythonExecutable)
 $env:PYTHONUTF8='1'
 & $python -m PyInstaller --noconfirm --clean --name ReadingRepair.Backend --onedir --console --distpath (Join-Path $stage 'python-dist') --workpath (Join-Path $stage 'python-build') --specpath $stage --paths (Join-Path $root 'backend') --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers --collect-all onnxruntime --collect-all av --copy-metadata huggingface-hub --copy-metadata faster-whisper (Join-Path $root 'backend/application.py')
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
@@ -27,11 +34,18 @@ $definition|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $bundle
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 # 配布物からしか起動しない。利用者のデータは参照しないversion照合。
 $version=& (Join-Path $bundle 'backend/ReadingRepair.Backend.exe') version
-if($LASTEXITCODE -ne 0 -or ($version|ConvertFrom-Json).result.version -ne '0.0.1'){throw '同梱backendのバージョンを確認できません。'}
-$archive=Join-Path $releaseRoot 'ReadingRepair-v0.0.1-win-x64.zip'
-if(Test-Path -LiteralPath $archive){throw '既存の配布ZIPは上書きしません。'}
+if($LASTEXITCODE -ne 0 -or ($version|ConvertFrom-Json).result.version -ne $productVersion){throw '同梱backendのバージョンを確認できません。'}
+# 配布に不要なデバッグ情報とONNX開発ツールを、新規生成領域だけから除外する。
+$bundlePrefix=[IO.Path]::GetFullPath($bundle)+[IO.Path]::DirectorySeparatorChar
+$excluded=@(Get-ChildItem -LiteralPath $bundle -Recurse -File -Filter '*.pdb')
+$onnxTools=Join-Path $bundle 'backend/_internal/onnxruntime/tools'
+if(Test-Path -LiteralPath $onnxTools){$excluded+=Get-Item -LiteralPath $onnxTools}
+foreach($item in $excluded){
+    if(!$item.FullName.StartsWith($bundlePrefix,[StringComparison]::OrdinalIgnoreCase)){throw '生成領域外の削除を拒否しました。'}
+    Remove-Item -LiteralPath $item.FullName -Recurse
+}
 Compress-Archive -Path $bundle -DestinationPath $archive -CompressionLevel Optimal
 $hash=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $hash+'  '+[IO.Path]::GetFileName($archive)|Set-Content -LiteralPath (Join-Path $releaseRoot 'SHA256SUMS.txt') -Encoding utf8
-@{version='0.0.1';bundle=$bundle;archive=$archive;sha256=$hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $releaseRoot 'build-result.json') -Encoding utf8
+@{version=$productVersion;bundle=$bundle;archive=$archive;sha256=$hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $releaseRoot 'build-result.json') -Encoding utf8
 Get-Content -LiteralPath (Join-Path $releaseRoot 'build-result.json')
