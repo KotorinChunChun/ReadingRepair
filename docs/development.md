@@ -69,6 +69,10 @@ faster-whisper 1.2.1はPyAV 19で廃止された引数を使うため、本版�
 
 公開は`gh repo create`／`git push`／`gh release create`を、リリース許可があるときだけ行います。配布物を別配置へ展開し、doctor・合成・文字起こし・CLI・管理IPCを確認してから公開します。リリース後はGitHubから再取得したZIPのハッシュを照合します。公開したZIPとsetupは認証なしで再取得して容量・ハッシュを照合します。
 
+## CLIとGUIの辞書同期
+
+CLIによる辞書更新後のGUIへの反映は、[CLI辞書更新後のGUI同期規定](cli-gui-dictionary-sync.md)を実装時の必須要件とします。
+
 ## 管理連携
 
 WPFのDispatcherを使う管理契約2の実装を子内に保持します。SID別・CurrentUserOnlyのパイプ、操作期限、要求サイズ、expectedPid、同一セッションと実行パスの検査を備えます。変換中はstopを拒否し、自動起動予約は作成しません。
