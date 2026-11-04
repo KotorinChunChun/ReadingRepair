@@ -12,6 +12,8 @@ public partial class MainWindow : Window
 {
     readonly Backend backend;
     readonly SoundPlayer player = new();
+    readonly DictionaryAutoRefresh dictionaryRefresh;
+    readonly System.Windows.Threading.DispatcherTimer dictionaryTimer = new() {Interval=TimeSpan.FromSeconds(2)};
     bool busy, refreshing, savingAnswer;
     string? currentId;
     JsonNode? current;
@@ -55,6 +57,14 @@ public partial class MainWindow : Window
         MinWidth=800;Width=Math.Max(MinWidth,work.Width/2);Height=work.Height;
         Left=work.Right-Width;Top=work.Top;
         backend=new Backend(); SettingsGrid.ItemsSource=settings;
+        dictionaryRefresh=new DictionaryAutoRefresh(()=>backend.Call("dictionary"),ApplyDictionary);
+        dictionaryTimer.Tick+=async (_,_)=>
+        {
+            if(busy || !IsReady)return;
+            try {await dictionaryRefresh.RefreshAsync();}
+            catch(Exception error) { DictionarySummary.ToolTip="辞書の自動更新を再試行します。"+error.Message; }
+        };
+        Closed+=(_,_)=>{dictionaryTimer.Stop();dictionaryRefresh.Dispose();};
 
         Closing += (_,e) =>
         {
@@ -63,7 +73,7 @@ public partial class MainWindow : Window
         };
     }
 
-    internal Task InitializeBackend()=>Safe(async ()=>{await ReloadSettings();await RefreshHistory();try{await ReloadDictionary();}catch(Exception error){StatusText.Text="辞書を取得できません。設定を確認してください。"+error.Message;}IsReady=true;});
+    internal Task InitializeBackend()=>Safe(async ()=>{await ReloadSettings();await RefreshHistory();try{await ReloadDictionary();}catch(Exception error){StatusText.Text="辞書を取得できません。設定を確認してください。"+error.Message;}IsReady=true;dictionaryTimer.Start();});
     internal bool IsBusy => busy;
     internal bool IsReady { get; private set; }
     async Task Safe(Func<Task> action)
@@ -85,8 +95,10 @@ public partial class MainWindow : Window
     async Task ReloadSettings()
     {
         var values=await backend.Call("settings");settings.Clear();
+        ConfigureDictionary(values);
         foreach(var pair in SettingLabels) settings.Add(new SettingRow {Key=pair.Key,Label=pair.Value,Value=Text(values[pair.Key])});
     }
+    void ConfigureDictionary(JsonNode values)=>dictionaryRefresh.SetPath(Text(values[Text(values["tts_engine"])=="http-wav" ? "api_dictionary_file" : "dictionary_file"]));
     async Task RefreshHistory()
     {
         var rows=(await backend.Call("history")).AsArray().OfType<JsonObject>().Select(j=>new HistoryRow
@@ -283,7 +295,7 @@ public partial class MainWindow : Window
     {
         SettingsGrid.CommitEdit(DataGridEditingUnit.Cell,true);SettingsGrid.CommitEdit(DataGridEditingUnit.Row,true);
         var data=new JsonObject();foreach(var item in settings) data[item.Key]=item.Key=="review_timeout" ? JsonValue.Create(int.Parse(item.Value)) : JsonValue.Create(item.Value);
-        await backend.Call("save-settings",data);await ReloadDictionary();StatusText.Text="設定を保存しました。";
+        var saved=await backend.Call("save-settings",data);ConfigureDictionary(saved);await ReloadDictionary();StatusText.Text="設定を保存しました。";
     });
 
     static string DictionaryState(JsonNode? node)=>Text(node) switch {"registered"=>"登録済み","new"=>"新規","already_registered"=>"登録済み","duplicate"=>"辞書内で重複","duplicate_candidate"=>"候補内で重複","conflict"=>"読みが競合",_=>Text(node)};
@@ -295,10 +307,10 @@ public partial class MainWindow : Window
         if(DictionaryChecks!=null)DictionaryChecks.ItemsSource=null;
     }
     void DictionaryCandidate_Changed(object sender,TextChangedEventArgs e)=>InvalidateDictionaryCheck();
-    async Task ReloadDictionary()
+    async Task ReloadDictionary()=>await dictionaryRefresh.RefreshAsync(force:true);
+    void ApplyDictionary(JsonNode data)
     {
         InvalidateDictionaryCheck();
-        var data=await backend.Call("dictionary");
         DictionaryGrid.ItemsSource=data["entries"]?.AsArray().Select(row=>new DictionaryRow {Priority=Text(row?["priority"]),Surface=Text(row?["surface"]),Reading=Text(row?["reading"]),Accent=Text(row?["accent"]),State=DictionaryState(row?["state"])}).ToList();
         DictionarySummary.Text=$"{data["entries"]?.AsArray().Count ?? 0}件　重複・競合 {data["issues"]?.AsArray().Count ?? 0}件";
         DictionarySummary.ToolTip=Text(data["dictionary_file"]);

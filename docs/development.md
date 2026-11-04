@@ -44,6 +44,7 @@ dotnet build Desktop/ReadingRepair.Desktop.csproj -p:NuGetAudit=false
 dotnet build Registration/Registration.csproj -p:NuGetAudit=false
 ./Registration/bin/Debug/net10.0-windows/ReadingRepair.Registration.exe self-test
 ./scripts/Test-Desktop.ps1
+./scripts/Test-DictionarySync.ps1
 ```
 
 HTTP TTS試験はローカルサーバーで実POST/WAVを使い、認識とLLMは架空応答です。実辞書へは登録しません。VoiSona接続・本物のWhisper・実音声の確認は別の実接続試験として記録します。
@@ -92,3 +93,5 @@ $build=Get-Content ./release/v0.0.2/build-result.json -Raw | ConvertFrom-Json
 ```
 
 共通Maintenanceと標準テンプレートの採用ソースはKotorinToysの公開mainです。installer/product.issは採用した標準テンプレートのコピーを保持します。導入時はKotorinToys本体のインストールを必要とせず、setupだけで現在ユーザーへ導入できます。配布入力の秘密検査・本体の公開台帳照合を行ってから公開します。既存v0.0.1のタグ・ZIP・setupは変更しません。
+
+辞書自動反映の試験は、新規の隔離HTTP辞書と別プロセスのCLI、実WPF一覧を使用します。実VoiSona辞書や既存設定は変更せず、CLIロック保持中の更新抑止、入力保持、確認結果の無効化、破損後の再試行、同サイズ・同日時の変更、終了時の監視停止を確認します。
