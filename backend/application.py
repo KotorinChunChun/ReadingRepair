@@ -20,6 +20,7 @@ import lab
 import progress_log
 import llm_records
 import tts_backends
+import dictionary_git
 from adjudication import load_answers,tts_occurrences
 from reviewers import Config
 
@@ -309,55 +310,91 @@ class Application:
         (path / 'cancel.request').write_text('stop', encoding='ascii')
         return {'id': identifier, 'status': 'stop_requested'}
 
+    @contextmanager
+    def dictionary_update(self, settings, record=None, job_id=None):
+        state = {'record': record}
+        with exclusive(self.lock_file(settings)):
+            try:
+                yield state
+            finally:
+                try:
+                    receipt = dictionary_git.sync(self.settings_file.parent / 'dictionary-git.json', settings)
+                except Exception as error:
+                    receipt = {'status':'failed', 'error_type':type(error).__name__,
+                               'message':'辞書Git同期に失敗しました。登録済み内容は保持します。'}
+                state['receipt'] = receipt
+                if receipt['status'] != 'disabled':
+                    folder = state['record']
+                    try:
+                        if folder is None:
+                            folder = Path(settings['runs_root']).resolve() / ('dictionary-git-sync-' + uuid.uuid4().hex)
+                        lab.save(folder / 'dictionary-git-sync.json', receipt)
+                        if job_id:
+                            saved = lab.load(folder / 'app-job.json')
+                            saved['dictionary_git_sync'] = receipt
+                            lab.save(folder / 'app-job.json', saved)
+                        message = '辞書Git同期：' + receipt.get('message', receipt['status'])
+                        if receipt.get('commit'): message += ' コミット=' + receipt['commit']
+                        if receipt.get('detail'): message += ' 詳細：' + receipt['detail']
+                        progress_log.emit(folder, 'dictionary-git', 'failed' if receipt['status'] == 'failed' else 'completed', message)
+                        if job_id and (folder / 'manifest.json').is_file():
+                            lab.export_current_history(folder)
+                    except Exception as error:
+                        # 同期結果の記録失敗でも、元の登録例外や変換結果を失わせない。
+                        receipt['record_error_type'] = type(error).__name__
+
     def execute(self, identifier, retry_reviewers=False, apply=False):
         path = self.directory(identifier)
-        with exclusive(self.lock_file(lab.load(path / 'app-job.json')['settings'])):
-            job = lab.load(path / 'app-job.json'); settings = job['settings']
-            if job['status'] == 'completed': return self.status(identifier)
-            if retry_reviewers:
-                latest = self.settings()
-                revised = {**settings, **{k:latest[k] for k in ('reviewer_env','gemini_transport','review_timeout')}}
-                if revised != settings:
-                    job['settings'] = settings = revised
-                    lab.versioned_save(path, 'app-job.json', job)
-            if apply:
-                job['mode'] = 'repair'
-            self.input_text(path, job, repair=True)
-            (path / 'cancel.request').unlink(missing_ok=True)
-            job.pop('error_type',None);job.pop('message',None)
-            job.update(status='running', updated_at=now()); lab.versioned_save(path, 'app-job.json', job)
-            environment = {'VOISONA_REPAIR_CANCEL_FILE': str(path / 'cancel.request'),
-                           'GEMINI_REVIEW_TRANSPORT': settings['gemini_transport'],
-                           'REVIEW_TIMEOUT_SECONDS': str(settings['review_timeout'])}
-            previous = {k: os.environ.get(k) for k in environment}; os.environ.update(environment)
-            args = SimpleNamespace(project_root=Path(settings['project_root']), text_file=path / 'input.txt', run_dir=path,
-                llm_model=settings['llm_model'], whisper_model=Path(settings['whisper_model']),
-                whisper_site_packages=Path(settings['whisper_site_packages']) if settings['whisper_site_packages'] else None,
-                voice=settings['voice'], voice_version=settings['voice_version'], dictionary_file=Path(settings['dictionary_file']),
-                reviewer_env=Path(settings['reviewer_env']), answers_file=path / 'user-answers.json' if (path / 'user-answers.json').is_file() else None,
-                resume=(path / 'manifest.json').exists(), apply=job['mode'] == 'repair', prepare_only=job['mode'] == 'verify',
-                retry_reviewers=retry_reviewers, user_readings=job['known_readings'], app_managed=True,
-                tts_engine=settings.get('tts_engine','voisona'), tts_profile=settings.get('tts_profile','default'),
-                tts_env=settings.get('tts_env',''), api_dictionary_file=settings.get('api_dictionary_file',''))
-            try:
-                lab.run(args)
-                job['status'] = lab.load(path / 'manifest.json')['status']
-                job.pop('error_type', None)
-            except InterruptedError:
-                job['status'] = 'cancelled'
-            except Exception as error:
-                job.update(status='failed', error_type=type(error).__name__)
-                if isinstance(error, (ValueError, RuntimeError)): job['message']=str(error)[:400]
-            finally:
-                for key, value in previous.items():
-                    if value is None: os.environ.pop(key, None)
-                    else: os.environ[key] = value
-                job['updated_at'] = now(); lab.save(path / 'app-job.json', job)
-                if (path / 'manifest.json').is_file():
-                    try: lab.export_current_history(path)
-                    except Exception: pass
+        settings = lab.load(path / 'app-job.json')['settings']
+        with self.dictionary_update(settings, path, identifier):
+            self._execute_locked(path, identifier, retry_reviewers, apply)
         return self.status(identifier)
 
+    def _execute_locked(self, path, identifier, retry_reviewers=False, apply=False):
+        job = lab.load(path / 'app-job.json'); settings = job['settings']
+        if job['status'] == 'completed': return self.status(identifier)
+        if retry_reviewers:
+            latest = self.settings()
+            revised = {**settings, **{k:latest[k] for k in ('reviewer_env','gemini_transport','review_timeout')}}
+            if revised != settings:
+                job['settings'] = settings = revised
+                lab.versioned_save(path, 'app-job.json', job)
+        if apply:
+            job['mode'] = 'repair'
+        self.input_text(path, job, repair=True)
+        (path / 'cancel.request').unlink(missing_ok=True)
+        job.pop('error_type',None);job.pop('message',None)
+        job.update(status='running', updated_at=now()); lab.versioned_save(path, 'app-job.json', job)
+        environment = {'VOISONA_REPAIR_CANCEL_FILE': str(path / 'cancel.request'),
+                       'GEMINI_REVIEW_TRANSPORT': settings['gemini_transport'],
+                       'REVIEW_TIMEOUT_SECONDS': str(settings['review_timeout'])}
+        previous = {k: os.environ.get(k) for k in environment}; os.environ.update(environment)
+        args = SimpleNamespace(project_root=Path(settings['project_root']), text_file=path / 'input.txt', run_dir=path,
+            llm_model=settings['llm_model'], whisper_model=Path(settings['whisper_model']),
+            whisper_site_packages=Path(settings['whisper_site_packages']) if settings['whisper_site_packages'] else None,
+            voice=settings['voice'], voice_version=settings['voice_version'], dictionary_file=Path(settings['dictionary_file']),
+            reviewer_env=Path(settings['reviewer_env']), answers_file=path / 'user-answers.json' if (path / 'user-answers.json').is_file() else None,
+            resume=(path / 'manifest.json').exists(), apply=job['mode'] == 'repair', prepare_only=job['mode'] == 'verify',
+            retry_reviewers=retry_reviewers, user_readings=job['known_readings'], app_managed=True,
+            tts_engine=settings.get('tts_engine','voisona'), tts_profile=settings.get('tts_profile','default'),
+            tts_env=settings.get('tts_env',''), api_dictionary_file=settings.get('api_dictionary_file',''))
+        try:
+            lab.run(args)
+            job['status'] = lab.load(path / 'manifest.json')['status']
+            job.pop('error_type', None)
+        except InterruptedError:
+            job['status'] = 'cancelled'
+        except Exception as error:
+            job.update(status='failed', error_type=type(error).__name__)
+            if isinstance(error, (ValueError, RuntimeError)): job['message']=str(error)[:400]
+        finally:
+            for key, value in previous.items():
+                if value is None: os.environ.pop(key, None)
+                else: os.environ[key] = value
+            job['updated_at'] = now(); lab.save(path / 'app-job.json', job)
+            if (path / 'manifest.json').is_file():
+                try: lab.export_current_history(path)
+                except Exception: pass
     def audio(self, identifier, phase, play=False):
         path = self.directory(identifier) / ('before-2.wav' if phase == 'before' else 'after-3.wav')
         if not path.is_file(): raise ValueError('この段階の音声はまだ生成されていません。')
@@ -389,20 +426,33 @@ class Application:
         if not isinstance(expected,str) or not re.fullmatch(r'[0-9a-f]{64}',expected):
             raise ValueError('先に追加候補を確認してください。')
         settings = self.settings()
-        with exclusive(self.lock_file(settings)):
-            if not payload.get('entries'): raise ValueError('追加する表記と読みを入力してください。')
-            backend = tts_backends.create(settings)
-            checked = lab.dictionary_precheck(tts_backends.dictionary_path(settings), payload['entries'])
-            if checked['dictionary_sha256'] != expected:
-                return {'status':'dictionary_changed','precheck':checked,'message':'確認後に辞書が変更されました。最新の辞書で再確認してください。'}
-            if checked['has_conflicts']: return {'status':'dictionary_conflict','precheck':checked}
-            if not checked['can_register']: return {'status':'already_registered','precheck':checked}
-            identifier = datetime.now().strftime('dictionary-additions-%Y%m%d-%H%M%S-') + uuid.uuid4().hex[:8]
-            folder = Path(settings['runs_root']).resolve() / identifier
-            entries = [{k:row[k] for k in ('surface','reading')} for row in checked['entries']]
-            lab.save(folder/'request.json', {'entries':entries,'dictionary_sha256':expected,'source':'利用者が確認して追加した辞書候補'})
-            registration = backend.register(folder,'\n'.join(row['surface'] for row in entries),entries)
-            return {'status':'registered','precheck':checked,'registration':registration,'dictionary':lab.dictionary_view(tts_backends.dictionary_path(settings)),'record':str(folder)}
+        with self.dictionary_update(settings) as state:
+            result = self._add_dictionary_locked(payload, settings, expected, state)
+        if state['receipt']['status'] != 'disabled':
+            result['dictionary_git_sync'] = state['receipt']
+        return result
+
+    def _add_dictionary_locked(self, payload, settings, expected, sync_state):
+        if not payload.get('entries'): raise ValueError('追加する表記と読みを入力してください。')
+        backend = tts_backends.create(settings)
+        checked = lab.dictionary_precheck(tts_backends.dictionary_path(settings), payload['entries'])
+        if checked['dictionary_sha256'] != expected:
+            return {'status':'dictionary_changed','precheck':checked,'message':'確認後に辞書が変更されました。最新の辞書で再確認してください。'}
+        if checked['has_conflicts']: return {'status':'dictionary_conflict','precheck':checked}
+        if not checked['can_register']: return {'status':'already_registered','precheck':checked}
+        identifier = datetime.now().strftime('dictionary-additions-%Y%m%d-%H%M%S-') + uuid.uuid4().hex[:8]
+        folder = Path(settings['runs_root']).resolve() / identifier
+        sync_state['record'] = folder
+        entries = [{k:row[k] for k in ('surface','reading')} for row in checked['entries']]
+        lab.save(folder/'request.json', {'entries':entries,'dictionary_sha256':expected,'source':'利用者が確認して追加した辞書候補'})
+        registration = backend.register(folder,'\n'.join(row['surface'] for row in entries),entries)
+        return {'status':'registered','precheck':checked,'registration':registration,'dictionary':lab.dictionary_view(tts_backends.dictionary_path(settings)),'record':str(folder)}
+
+    def sync_dictionary_git(self):
+        settings = self.settings()
+        with self.dictionary_update(settings) as state:
+            pass
+        return state['receipt']
 
     def doctor(self):
         values = self.settings(); checks = []
@@ -439,7 +489,7 @@ def main():
     for stream in (sys.stdin,sys.stdout,sys.stderr):
         if hasattr(stream,'reconfigure'):stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('settings', 'save-settings', 'doctor', 'create', 'execute', 'status', 'history', 'answer', 'stop', 'audio', 'export', 'dictionary', 'check-dictionary', 'add-dictionary', 'log', 'llm-log', 'engines', 'synthesize', 'transcribe', 'version'))
+    parser.add_argument('command', choices=('settings', 'save-settings', 'doctor', 'create', 'execute', 'status', 'history', 'answer', 'stop', 'audio', 'export', 'dictionary', 'check-dictionary', 'add-dictionary', 'log', 'llm-log', 'engines', 'synthesize', 'transcribe', 'version', 'sync-dictionary-git'))
     parser.add_argument('--workspace', type=Path, default=WORKSPACE)
     parser.add_argument('--settings', type=Path)
     parser.add_argument('--job')
@@ -490,6 +540,7 @@ def main():
         elif args.command == 'dictionary': result = app.dictionary()
         elif args.command == 'check-dictionary': result = app.check_dictionary(payload)
         elif args.command == 'add-dictionary': result = app.add_dictionary(payload)
+        elif args.command == 'sync-dictionary-git': result = app.sync_dictionary_git()
         elif args.command == 'log': result = app.log(args.job)
         elif args.command == 'llm-log': result = app.llm_log(args.job)
         else: result = app.cancel(args.job)

@@ -1,6 +1,6 @@
 #requires -Version 7.0
 param(
-    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log','engines','synthesize','transcribe','version')][string]$Command='doctor',
+    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log','engines','synthesize','transcribe','version','sync-dictionary-git')][string]$Command='doctor',
     [string]$Job,
     [string]$OutputFile,
     [string]$AudioFile,
