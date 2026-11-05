@@ -16,4 +16,6 @@
 
 既存backend/lab.pyのdictionary_snapshotでnative両版とJSONを読み取り、317/316/316件と表記一意性を確認した。316語の2形式が同じ順序・表記・読みであること、元exportとの317行完全一致、追加全件の登録成功・native一致記録・独立2票以上、公開ファイルのSHA-256を検証した。登録時点記録のSHA-256はfb69ac7a73b2ad36870e7dd730dfe3a41eee43e31bd7a98c2942f533488fc29b。元アプリ・辞書・処理状態を変更していない。
 
-公開前のファイル一覧・秘匿情報・リンク・JSON・差分を点検する。アプリコードを変更していないため全アプリビルドは行わず、既存parserによるデータ検証を対象にした。GitHubのプロジェクト用認証はKotorinChunChun、公開先は同所有者のReadingRepair（public）、作業は別cloneのdata/dictionary-snapshot-20261105へ分離した。Push・PRと公開後の取得検証はこれから実施する。
+公開前のファイル一覧・秘匿情報・リンク・JSON・差分を点検した。ライセンスへの相対リンク1箇所を修正後に再検証し、すべて成功した。辞書ディレクトリはLFに固定し、Gitのstage済みblobのSHA-256もmanifestと一致した。アプリコードを変更していないため全アプリビルドは行わず、既存parserによるデータ検証を対象にした。
+
+GitHubのプロジェクト用認証はKotorinChunChun、公開先は同所有者のReadingRepair（public）。別cloneのdata/dictionary-snapshot-20261105へ78404c64ce5cb67c7f85e01c36fd4375048ba8c0をpushし、[PR #2](https://github.com/KotorinChunChun/ReadingRepair/pull/2)を作成した。辞書・説明・manifestの公開6ファイルをGitHubから再取得し、全件のSHA-256と容量の一致を確認した。mainへのマージとReleaseの作成は行っていない。
