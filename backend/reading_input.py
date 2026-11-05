@@ -4,6 +4,21 @@ import unicodedata
 from adjudication import width_key
 
 CONTRACT = 'locally-resolved-reading.v3'
+
+
+class SegmentValidationError(ValueError):
+    """訂正する区間と理由を特定する。期待読みは訂正要求へ入れない。"""
+    def __init__(self, message, segment_id, surface=None):
+        super().__init__(message)
+        self.segment_id = segment_id
+        self.surface = surface
+
+    def detail(self):
+        value = {'segment_id': self.segment_id, 'reason': str(self)}
+        if self.surface is not None:
+            value['invalid_surface'] = self.surface
+        return value
+
 REFERENCE_INSTRUCTION = '''未確定区間だけの日本語の読みを判断してください。
 contextsのoriginalは意味を保つ原文、preparedは登録済みの読みをローカルで適用した文章です。contextsは文脈であり読みの出力対象ではありません。
 segmentsの各textだけを読み、全idを一度ずつ返してください。区間の前後に助詞や語の一部がある場合は文脈を考慮してください。読みは全角カタカナ、句読点・空白は読みません。
@@ -110,11 +125,13 @@ class ReadingInput:
             else:merged.append((start,end))
         return [{'original':self.original[a:b],'prepared':self.prepared(a,b)} for a,b in merged]
 
-    def request(self):
-        return {'segments':[{'id':p['id'],'text':p['text']} for p in self.queries],
-                'contexts':self.contexts([(p['start'],p['end']) for p in self.queries])}
+    def request(self, segment_id=None):
+        queries = [p for p in self.queries if segment_id is None or p['id'] == segment_id]
+        return {'segments':[{'id':p['id'],'text':p['text']} for p in queries],
+                'contexts':self.contexts([(p['start'],p['end']) for p in queries])}
 
     def merge(self,result):
+        if not isinstance(result,dict):raise ValueError('未確定区間の応答はJSONオブジェクトで指定してください。')
         rows=result.get('segments')
         if not isinstance(rows,list) or len(rows)!=len(self.queries):raise ValueError('未確定区間の応答件数が一致しません。')
         expected={p['id']:p for p in self.queries};responses={}
@@ -122,18 +139,24 @@ class ReadingInput:
             if not isinstance(row,dict) or row.get('id') not in expected or row['id'] in responses:
                 raise ValueError('未確定区間の応答IDが不明または重複しています。')
             part=expected[row['id']];words=row.get('words')
-            if not isinstance(words,list) or len(words)>500:raise ValueError('区間の単語一覧が不正です。')
+            if not isinstance(words,list) or len(words)>500:raise SegmentValidationError('区間の単語一覧が不正です。',row['id'])
             cleaned=[]
             for word in words:
-                surface=word.get('surface')
+                surface=word.get('surface') if isinstance(word,dict) else None
                 if not isinstance(surface,str) or not surface or surface not in part['text']:
-                    raise ValueError('応答の単語が未確定区間にありません。')
-                cleaned.append({'surface':surface,'reading':kana(word['reading'])})
+                    raise SegmentValidationError('応答の単語が未確定区間にありません。',row['id'],surface if isinstance(surface,str) else None)
+                try:
+                    cleaned.append({'surface':surface,'reading':kana(word.get('reading'))})
+                except ValueError as error:
+                    raise SegmentValidationError(str(error),row['id'],surface) from error
             # 漢字等の対象語を完全に省略した応答は、精度を測定できないため拒否する。
             for match in re.finditer(r'[\u3400-\u9fff々A-Za-z0-9①-⑳]',part['text']):
                 if not any(m.start()<=match.start()<m.end() for word in cleaned for m in re.finditer(re.escape(word['surface']),part['text'])):
-                    raise ValueError('未確定区間の検証対象語が応答から省略されています。未対応の文字：'+match[0])
-            responses[row['id']]={'reading':kana(row['reading']),'words':cleaned}
+                    raise SegmentValidationError('未確定区間の検証対象語が応答から省略されています。未対応の文字：'+match[0],row['id'])
+            try:
+                responses[row['id']]={'reading':kana(row.get('reading')),'words':cleaned}
+            except ValueError as error:
+                raise SegmentValidationError(str(error),row['id']) from error
         reading=[];words=[]
         for part in self.parts:
             if part.get('id'):

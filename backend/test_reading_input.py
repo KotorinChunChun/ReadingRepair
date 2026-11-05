@@ -162,6 +162,54 @@ class ScopedTransportTests(unittest.TestCase):
 
 
 class ScopedValidationRetryTests(unittest.TestCase):
+    def test_context_word_leak_is_repaired_only_in_failed_segment(self):
+        """実障害: Lunaが文脈の有限体を区間先頭に混ぜた応答を再現。"""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm
+        valid={'id':'u1','reading':'コーモク','words':[{'surface':'項目','reading':'コーモク'}]}
+        invalid={'id':'u2','reading':'ユーゲンタイワアンゴー',
+                 'words':[{'surface':'有限体','reading':'ユーゲンタイ'},{'surface':'暗号','reading':'アンゴー'}]}
+        corrected={'id':'u2','reading':'ワアンゴー','words':[{'surface':'暗号','reading':'アンゴー'}]}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);client=Llm(root,'gpt-5.6-luna',root,table(('有限体','ユーゲンタイ'),('未出現秘密語','ヒミツ')))
+            sent=[]
+            def respond(command,**kwargs):
+                prompt=Path(command[command.index('-PromptFile')+1]).read_text(encoding='utf-8')
+                self.assertNotIn('未出現秘密語',prompt)
+                request=json.loads(prompt.split('入力JSON:\n')[-1]);sent.append(request)
+                reply={'segments':[valid,invalid]} if len(sent)==1 else {'segments':[corrected]}
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(reply),encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond):
+                result=client.ask('reference','',{'original':'項目有限体は暗号'})
+            self.assertEqual(len(sent),2)
+            self.assertEqual(sent[1]['segments'],[{'id':'u2','text':'は暗号'}])
+            self.assertEqual(sent[1]['previous_response'],{'segments':[invalid]})
+            self.assertEqual(sent[1]['validation_error']['invalid_surface'],'有限体')
+            self.assertNotIn('expected_reading',json.dumps(sent[1]))
+            self.assertEqual(result['reading'],'コーモクユーゲンタイワアンゴー')
+            self.assertEqual(result['words'].count({'surface':'有限体','reading':'ユーゲンタイ'}),1)
+            self.assertEqual(json.loads((root/'llm/reference.validation.json').read_text())['status'],'corrected')
+
+    def test_segment_retry_cannot_replace_a_valid_other_segment(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from lab import Llm
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);client=Llm(root,'test',root,table(('有限体','ユーゲンタイ')))
+            replies=[{'segments':[{'id':'u1','reading':'コーモク','words':[{'surface':'項目','reading':'コーモク'}]},
+                                  {'id':'u2','reading':'ワアンゴー','words':[]}]},
+                     {'segments':[{'id':'u1','reading':'カイザン','words':[{'surface':'項目','reading':'カイザン'}]},
+                                  {'id':'u2','reading':'ワアンゴー','words':[{'surface':'暗号','reading':'アンゴー'}]}]}]
+            def respond(command,**kwargs):
+                Path(command[command.index('-OutputFile')+1]).write_text(json.dumps(replies.pop(0)),encoding='utf-8')
+            with patch('lab.subprocess.run',side_effect=respond) as transport,self.assertRaisesRegex(ValueError,'訂正応答'):
+                client.ask('reference','',{'original':'項目有限体は暗号'})
+            self.assertEqual(transport.call_count,2)
+            self.assertFalse((root/'llm/reference.merged.json').exists())
+
     def test_missing_word_retries_once_without_expected_reading_or_full_table(self):
         import tempfile
         from pathlib import Path
