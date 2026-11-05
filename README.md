@@ -12,6 +12,7 @@
 
 - [使い方・CLI](docs/guide.md)
 - [初回設定・モデル取得・失敗後の再開](docs/first-run.md)
+- [暫定共有辞書・登録時点の記録](dictionaries/engineer-exam/2026-11-05/README.md)
 - [TTS APIの接続・拡張](docs/tts-engines.md)
 - [開発・ビルド・検証](docs/development.md)
 - [ライセンス](LICENSE)

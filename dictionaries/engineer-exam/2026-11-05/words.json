@@ -1,0 +1,1269 @@
+{
+  "format": "readingrepair.dictionary.v1",
+  "entries": [
+    {
+      "surface": "関する次",
+      "reading": "カンスルツギ"
+    },
+    {
+      "surface": "床版",
+      "reading": "ショウバン"
+    },
+    {
+      "surface": "下図",
+      "reading": "カズ"
+    },
+    {
+      "surface": "緑化",
+      "reading": "リョッカ"
+    },
+    {
+      "surface": "盛土",
+      "reading": "モリド"
+    },
+    {
+      "surface": "胸高",
+      "reading": "キョウコウ"
+    },
+    {
+      "surface": "正規形",
+      "reading": "セイキケイ"
+    },
+    {
+      "surface": "Ｓｏｃｉｅｔｙ",
+      "reading": "ソサエティ"
+    },
+    {
+      "surface": "ＭＡＣ",
+      "reading": "マック"
+    },
+    {
+      "surface": "造材",
+      "reading": "ゾーザイ"
+    },
+    {
+      "surface": "土粒子",
+      "reading": "ドリュウシ"
+    },
+    {
+      "surface": "重複",
+      "reading": "チョウフク"
+    },
+    {
+      "surface": "波速",
+      "reading": "ハソク"
+    },
+    {
+      "surface": "日本産業",
+      "reading": "ニホンサンギョウ"
+    },
+    {
+      "surface": "三角形",
+      "reading": "サンカクケイ"
+    },
+    {
+      "surface": "土量",
+      "reading": "ドリョウ"
+    },
+    {
+      "surface": "速度水頭",
+      "reading": "ソクドスイトウ"
+    },
+    {
+      "surface": "雨水",
+      "reading": "ウスイ"
+    },
+    {
+      "surface": "体心",
+      "reading": "タイシン"
+    },
+    {
+      "surface": "分別",
+      "reading": "ブンベツ"
+    },
+    {
+      "surface": "損失水頭",
+      "reading": "ソンシツスイトウ"
+    },
+    {
+      "surface": "圧力水頭",
+      "reading": "アツリョクスイトウ"
+    },
+    {
+      "surface": "幹方式",
+      "reading": "カンホウシキ"
+    },
+    {
+      "surface": "枝葉",
+      "reading": "シヨウ"
+    },
+    {
+      "surface": "残存",
+      "reading": "ザンゾン"
+    },
+    {
+      "surface": "藻場",
+      "reading": "モバ"
+    },
+    {
+      "surface": "ｐＨ",
+      "reading": "ピーエイチ"
+    },
+    {
+      "surface": "乾質量",
+      "reading": "カンシツリョウ"
+    },
+    {
+      "surface": "傾斜堤",
+      "reading": "ケイシャテイ"
+    },
+    {
+      "surface": "底質",
+      "reading": "テイシツ"
+    },
+    {
+      "surface": "陰イオン",
+      "reading": "インイオン"
+    },
+    {
+      "surface": "土塊",
+      "reading": "ドカイ"
+    },
+    {
+      "surface": "履帯",
+      "reading": "リタイ"
+    },
+    {
+      "surface": "河岸",
+      "reading": "カガン"
+    },
+    {
+      "surface": "炭酸塩",
+      "reading": "タンサンエン"
+    },
+    {
+      "surface": "白炭",
+      "reading": "ハクタン"
+    },
+    {
+      "surface": "相補鎖",
+      "reading": "ソウホサ"
+    },
+    {
+      "surface": "草木",
+      "reading": "ソウモク"
+    },
+    {
+      "surface": "雑草木",
+      "reading": "ザッソウモク"
+    },
+    {
+      "surface": "ＣＯＰ",
+      "reading": "コップ"
+    },
+    {
+      "surface": "天端",
+      "reading": "テンバ"
+    },
+    {
+      "surface": "幹距",
+      "reading": "カンキョ"
+    },
+    {
+      "surface": "水通し",
+      "reading": "ミズトオシ"
+    },
+    {
+      "surface": "浮遊砂",
+      "reading": "フユウサ"
+    },
+    {
+      "surface": "設計高",
+      "reading": "セッケイコウ"
+    },
+    {
+      "surface": "東日本",
+      "reading": "ヒガシニホン"
+    },
+    {
+      "surface": "柔細胞",
+      "reading": "ジュウサイボウ"
+    },
+    {
+      "surface": "硫酸塩",
+      "reading": "リュウサンエン"
+    },
+    {
+      "surface": "移動相",
+      "reading": "イドウソウ"
+    },
+    {
+      "surface": "胸高形",
+      "reading": "キョウコウケイ"
+    },
+    {
+      "surface": "重み付け",
+      "reading": "オモミヅケ"
+    },
+    {
+      "surface": "形鋼",
+      "reading": "ケイコウ"
+    },
+    {
+      "surface": "根系",
+      "reading": "コンケイ"
+    },
+    {
+      "surface": "樹種間",
+      "reading": "ジュシュカン"
+    },
+    {
+      "surface": "法正",
+      "reading": "ホウセイ"
+    },
+    {
+      "surface": "浅水",
+      "reading": "センスイ"
+    },
+    {
+      "surface": "無性",
+      "reading": "ムセイ"
+    },
+    {
+      "surface": "等分布",
+      "reading": "トウブンプ"
+    },
+    {
+      "surface": "計画高水位",
+      "reading": "ケイカクコウスイイ"
+    },
+    {
+      "surface": "輪数",
+      "reading": "リンスウ"
+    },
+    {
+      "surface": "鎖体",
+      "reading": "サタイ"
+    },
+    {
+      "surface": "陽イオン",
+      "reading": "ヨウイオン"
+    },
+    {
+      "surface": "ＮＯｘ",
+      "reading": "ノックス"
+    },
+    {
+      "surface": "のり覆工",
+      "reading": "ノリフクコオ"
+    },
+    {
+      "surface": "不良木",
+      "reading": "フリョウボク"
+    },
+    {
+      "surface": "堤体内",
+      "reading": "テイタイナイ"
+    },
+    {
+      "surface": "水粒子",
+      "reading": "スイリュウシ"
+    },
+    {
+      "surface": "鋼床版",
+      "reading": "コウショウバン"
+    },
+    {
+      "surface": "ＭＤＧｓ",
+      "reading": "エムディージーズ"
+    },
+    {
+      "surface": "伐期齢",
+      "reading": "バッキレイ"
+    },
+    {
+      "surface": "内標準",
+      "reading": "ナイヒョウジュン"
+    },
+    {
+      "surface": "固定相",
+      "reading": "コテイソウ"
+    },
+    {
+      "surface": "導関数",
+      "reading": "ドウカンスウ"
+    },
+    {
+      "surface": "層厚",
+      "reading": "ソウコウ"
+    },
+    {
+      "surface": "幹径",
+      "reading": "カンケイ"
+    },
+    {
+      "surface": "既製杭",
+      "reading": "キセイグイ"
+    },
+    {
+      "surface": "横断溝",
+      "reading": "オウダンコウ"
+    },
+    {
+      "surface": "菌床",
+      "reading": "キンショウ"
+    },
+    {
+      "surface": "都市づくり",
+      "reading": "トシヅクリ"
+    },
+    {
+      "surface": "危険源",
+      "reading": "キケンゲン"
+    },
+    {
+      "surface": "器高",
+      "reading": "キコー"
+    },
+    {
+      "surface": "木方式",
+      "reading": "モクホウシキ"
+    },
+    {
+      "surface": "木部繊維",
+      "reading": "モクブセンイ"
+    },
+    {
+      "surface": "構文木",
+      "reading": "コウブンボク"
+    },
+    {
+      "surface": "樹冠火",
+      "reading": "ジュカンカ"
+    },
+    {
+      "surface": "測高",
+      "reading": "ソッコウ"
+    },
+    {
+      "surface": "直立堤",
+      "reading": "チョクリツテイ"
+    },
+    {
+      "surface": "二次壁",
+      "reading": "ニジヘキ"
+    },
+    {
+      "surface": "冬鳥",
+      "reading": "フユドリ"
+    },
+    {
+      "surface": "分子鎖",
+      "reading": "ブンシサ"
+    },
+    {
+      "surface": "利益相反",
+      "reading": "リエキソウハン"
+    },
+    {
+      "surface": "収束形",
+      "reading": "シュウソクケイ"
+    },
+    {
+      "surface": "呼量",
+      "reading": "コリョウ"
+    },
+    {
+      "surface": "固定端",
+      "reading": "コテイタン"
+    },
+    {
+      "surface": "土層内",
+      "reading": "ドソウナイ"
+    },
+    {
+      "surface": "地中火",
+      "reading": "チチュウカ"
+    },
+    {
+      "surface": "基面",
+      "reading": "キメン"
+    },
+    {
+      "surface": "塩生",
+      "reading": "エンセイ"
+    },
+    {
+      "surface": "実利用",
+      "reading": "ジツリヨウ"
+    },
+    {
+      "surface": "平均樹高",
+      "reading": "ヘイキンジュコウ"
+    },
+    {
+      "surface": "擁壁",
+      "reading": "ヨウヘキ"
+    },
+    {
+      "surface": "日本国内",
+      "reading": "ニホンコクナイ"
+    },
+    {
+      "surface": "最大主",
+      "reading": "サイダイシュ"
+    },
+    {
+      "surface": "残存木",
+      "reading": "ザンソンボク"
+    },
+    {
+      "surface": "泥流",
+      "reading": "デイリュウ"
+    },
+    {
+      "surface": "混成堤",
+      "reading": "コンセイテイ"
+    },
+    {
+      "surface": "滑動力",
+      "reading": "カツドウリョク"
+    },
+    {
+      "surface": "炎光",
+      "reading": "エンコウ"
+    },
+    {
+      "surface": "現存",
+      "reading": "ゲンゾン"
+    },
+    {
+      "surface": "縦侵食",
+      "reading": "ジュウシンショク"
+    },
+    {
+      "surface": "草地",
+      "reading": "ソウチ"
+    },
+    {
+      "surface": "鋼製",
+      "reading": "コウセイ"
+    },
+    {
+      "surface": "鎖ＤＮＡ",
+      "reading": "サディーエヌエー"
+    },
+    {
+      "surface": "長寿命",
+      "reading": "チョウジュミョウ"
+    },
+    {
+      "surface": "餌付け",
+      "reading": "エヅケ"
+    },
+    {
+      "surface": "高潮等",
+      "reading": "タカシオトウ"
+    },
+    {
+      "surface": "ＣＩＴＥＳ",
+      "reading": "サイテス"
+    },
+    {
+      "surface": "Ｃｕ０",
+      "reading": "シーユーゼロ"
+    },
+    {
+      "surface": "ＳＲＡＭ",
+      "reading": "エスラム"
+    },
+    {
+      "surface": "ＷＥＰ",
+      "reading": "ウェップ"
+    },
+    {
+      "surface": "上層樹高",
+      "reading": "ジョウソウジュコウ"
+    },
+    {
+      "surface": "下枝",
+      "reading": "シタエダ"
+    },
+    {
+      "surface": "二本鎖",
+      "reading": "ニホンサ"
+    },
+    {
+      "surface": "伏工",
+      "reading": "フセコウ"
+    },
+    {
+      "surface": "双極子",
+      "reading": "ソウキョクシ"
+    },
+    {
+      "surface": "四重",
+      "reading": "シジュウ"
+    },
+    {
+      "surface": "地熱発電",
+      "reading": "チネツハツデン"
+    },
+    {
+      "surface": "地表火",
+      "reading": "チヒョウカ"
+    },
+    {
+      "surface": "塩交換",
+      "reading": "エンコウカン"
+    },
+    {
+      "surface": "壁孔",
+      "reading": "ヘキコウ"
+    },
+    {
+      "surface": "孔処理",
+      "reading": "コウショリ"
+    },
+    {
+      "surface": "富栄養",
+      "reading": "フエイヨウ"
+    },
+    {
+      "surface": "小型鯨類",
+      "reading": "コガタゲイルイ"
+    },
+    {
+      "surface": "床植物",
+      "reading": "ショウショクブツ"
+    },
+    {
+      "surface": "底部",
+      "reading": "テイブ"
+    },
+    {
+      "surface": "心綱",
+      "reading": "シンヅナ"
+    },
+    {
+      "surface": "必要値",
+      "reading": "ヒツヨウチ"
+    },
+    {
+      "surface": "必要十",
+      "reading": "ヒツヨウジュウ"
+    },
+    {
+      "surface": "振動子",
+      "reading": "シンドウシ"
+    },
+    {
+      "surface": "斜距離",
+      "reading": "シャキョリ"
+    },
+    {
+      "surface": "既訪問",
+      "reading": "キホウモン"
+    },
+    {
+      "surface": "昆明",
+      "reading": "コンメイ"
+    },
+    {
+      "surface": "林床植物",
+      "reading": "リンショウショクブツ"
+    },
+    {
+      "surface": "柱材",
+      "reading": "チュウザイ"
+    },
+    {
+      "surface": "梢端",
+      "reading": "ショウタン"
+    },
+    {
+      "surface": "樹高成長",
+      "reading": "ジュコウセイチョウ"
+    },
+    {
+      "surface": "気相",
+      "reading": "キソウ"
+    },
+    {
+      "surface": "水路床",
+      "reading": "スイロショウ"
+    },
+    {
+      "surface": "液相",
+      "reading": "エキソウ"
+    },
+    {
+      "surface": "物的苦情",
+      "reading": "ブツテキクジョウ"
+    },
+    {
+      "surface": "砥",
+      "reading": "ト"
+    },
+    {
+      "surface": "砥粒",
+      "reading": "トリュウ"
+    },
+    {
+      "surface": "種群",
+      "reading": "シュグン"
+    },
+    {
+      "surface": "端分裂",
+      "reading": "タンブンレツ"
+    },
+    {
+      "surface": "縦弾性",
+      "reading": "ジュウダンセイ"
+    },
+    {
+      "surface": "繰返し輪",
+      "reading": "クリカエシリン"
+    },
+    {
+      "surface": "著作権オ",
+      "reading": "チョサクケンオ"
+    },
+    {
+      "surface": "薄板",
+      "reading": "ハクバン"
+    },
+    {
+      "surface": "角落ち",
+      "reading": "カドオチ"
+    },
+    {
+      "surface": "赤外分光",
+      "reading": "セキガイブンコウ"
+    },
+    {
+      "surface": "赤外吸収",
+      "reading": "セキガイキュウシュウ"
+    },
+    {
+      "surface": "鋼部材",
+      "reading": "コウブザイ"
+    },
+    {
+      "surface": "青灰色",
+      "reading": "セイカイショク"
+    },
+    {
+      "surface": "頂端分裂",
+      "reading": "チョウタンブンレツ"
+    },
+    {
+      "surface": "飛沫",
+      "reading": "ヒマツ"
+    },
+    {
+      "surface": "骨材中",
+      "reading": "コツザイチュウ"
+    },
+    {
+      "surface": "高水敷",
+      "reading": "コウスイジキ"
+    },
+    {
+      "surface": "高水護岸",
+      "reading": "コウスイゴガン"
+    },
+    {
+      "surface": "鳥海",
+      "reading": "チョウカイ"
+    },
+    {
+      "surface": "黒体",
+      "reading": "コクタイ"
+    },
+    {
+      "surface": "ＩＰｓｅｃ",
+      "reading": "アイピーセック"
+    },
+    {
+      "surface": "ＮＩＳＴ",
+      "reading": "ニスト"
+    },
+    {
+      "surface": "Ｎｉ質量",
+      "reading": "ニッケルシツリョウ"
+    },
+    {
+      "surface": "カルボキシル基",
+      "reading": "カルボキシルキ"
+    },
+    {
+      "surface": "カルボキシ基",
+      "reading": "カルボキシキ"
+    },
+    {
+      "surface": "コンクリート杭",
+      "reading": "コンクリートグイ"
+    },
+    {
+      "surface": "一次壁",
+      "reading": "イチジヘキ"
+    },
+    {
+      "surface": "万分",
+      "reading": "マンブン"
+    },
+    {
+      "surface": "上層木",
+      "reading": "ジョウソウボク"
+    },
+    {
+      "surface": "上載荷",
+      "reading": "ジョウサイカ"
+    },
+    {
+      "surface": "上載荷重",
+      "reading": "ジョウサイカジュウ"
+    },
+    {
+      "surface": "下流法面",
+      "reading": "カリュウノリメン"
+    },
+    {
+      "surface": "下種",
+      "reading": "カシュ"
+    },
+    {
+      "surface": "二次木部",
+      "reading": "ニジモクブ"
+    },
+    {
+      "surface": "原位置",
+      "reading": "ゲンイチ"
+    },
+    {
+      "surface": "向線",
+      "reading": "コウセン"
+    },
+    {
+      "surface": "地熱資源",
+      "reading": "チネツシゲン"
+    },
+    {
+      "surface": "基本高水",
+      "reading": "キホンコウスイ"
+    },
+    {
+      "surface": "堤防高",
+      "reading": "テイボウコウ"
+    },
+    {
+      "surface": "夏緑",
+      "reading": "カリョク"
+    },
+    {
+      "surface": "多摩甲斐",
+      "reading": "タマカイ"
+    },
+    {
+      "surface": "天文潮",
+      "reading": "テンモンチョウ"
+    },
+    {
+      "surface": "天草",
+      "reading": "アマクサ"
+    },
+    {
+      "surface": "密実",
+      "reading": "ミツジツ"
+    },
+    {
+      "surface": "導出木",
+      "reading": "ドウシュツボク"
+    },
+    {
+      "surface": "岩地",
+      "reading": "ガンチ"
+    },
+    {
+      "surface": "帯状",
+      "reading": "タイジョウ"
+    },
+    {
+      "surface": "撹拌翼",
+      "reading": "カクハンヨク"
+    },
+    {
+      "surface": "木口",
+      "reading": "コグチ"
+    },
+    {
+      "surface": "木部破壊",
+      "reading": "モクブハカイ"
+    },
+    {
+      "surface": "材齢",
+      "reading": "ザイレイ"
+    },
+    {
+      "surface": "極性側鎖",
+      "reading": "キョクセイソクサ"
+    },
+    {
+      "surface": "樹心",
+      "reading": "ジュシン"
+    },
+    {
+      "surface": "段波",
+      "reading": "ダンパ"
+    },
+    {
+      "surface": "氷床",
+      "reading": "ヒョウショウ"
+    },
+    {
+      "surface": "沈砂",
+      "reading": "チンサ"
+    },
+    {
+      "surface": "波向線",
+      "reading": "ハコウセン"
+    },
+    {
+      "surface": "温湿度",
+      "reading": "オンシツド"
+    },
+    {
+      "surface": "潮時",
+      "reading": "チョウジ"
+    },
+    {
+      "surface": "灰化",
+      "reading": "カイカ"
+    },
+    {
+      "surface": "燻煙",
+      "reading": "クンエン"
+    },
+    {
+      "surface": "物部",
+      "reading": "モノノベ"
+    },
+    {
+      "surface": "独自性",
+      "reading": "ドクジセイ"
+    },
+    {
+      "surface": "直立壁",
+      "reading": "チョクリツヘキ"
+    },
+    {
+      "surface": "相手方",
+      "reading": "アイテカタ"
+    },
+    {
+      "surface": "砂質",
+      "reading": "サシツ"
+    },
+    {
+      "surface": "確認手続",
+      "reading": "カクニンテツヅキ"
+    },
+    {
+      "surface": "磁粉",
+      "reading": "ジフン"
+    },
+    {
+      "surface": "空容量",
+      "reading": "クウヨウリョウ"
+    },
+    {
+      "surface": "端形状",
+      "reading": "タンケイジョウ"
+    },
+    {
+      "surface": "素線",
+      "reading": "ソセン"
+    },
+    {
+      "surface": "細骨材率",
+      "reading": "サイコツザイリツ"
+    },
+    {
+      "surface": "縁端",
+      "reading": "エンタン"
+    },
+    {
+      "surface": "虫えい",
+      "reading": "チュウエイ"
+    },
+    {
+      "surface": "親木",
+      "reading": "オヤギ"
+    },
+    {
+      "surface": "赤色",
+      "reading": "セキショク"
+    },
+    {
+      "surface": "路面水のみ",
+      "reading": "ロメンスイノミ"
+    },
+    {
+      "surface": "辺長",
+      "reading": "ヘンチョウ"
+    },
+    {
+      "surface": "鉛直力",
+      "reading": "エンチョクリョク"
+    },
+    {
+      "surface": "鋼種",
+      "reading": "コウシュ"
+    },
+    {
+      "surface": "防護衣",
+      "reading": "ボウゴイ"
+    },
+    {
+      "surface": "除根",
+      "reading": "ジョコン"
+    },
+    {
+      "surface": "飛砂",
+      "reading": "ヒサ"
+    },
+    {
+      "surface": "ＣＡＰ",
+      "reading": "キャップ"
+    },
+    {
+      "surface": "Ｆ１０",
+      "reading": "エフジュウ"
+    },
+    {
+      "surface": "めっき鋼板",
+      "reading": "メッキコウバン"
+    },
+    {
+      "surface": "ウ正",
+      "reading": "ウセイ"
+    },
+    {
+      "surface": "エ正",
+      "reading": "エセイ"
+    },
+    {
+      "surface": "ヒドロキシル基",
+      "reading": "ヒドロキシルキ"
+    },
+    {
+      "surface": "ヒドロキシ基",
+      "reading": "ヒドロキシキ"
+    },
+    {
+      "surface": "ピエゾ水頭",
+      "reading": "ピエゾスイトウ"
+    },
+    {
+      "surface": "ラヴォワジェ",
+      "reading": "ラヴォワジェ"
+    },
+    {
+      "surface": "一体性",
+      "reading": "イッタイセイ"
+    },
+    {
+      "surface": "一本鎖",
+      "reading": "イッポンサ"
+    },
+    {
+      "surface": "一組",
+      "reading": "ヒトクミ"
+    },
+    {
+      "surface": "三重",
+      "reading": "サンジュウ"
+    },
+    {
+      "surface": "上三角",
+      "reading": "ジョウサンカク"
+    },
+    {
+      "surface": "下木",
+      "reading": "シタギ"
+    },
+    {
+      "surface": "不釣合いか",
+      "reading": "フツリアイカ"
+    },
+    {
+      "surface": "中心杭",
+      "reading": "チュウシングイ"
+    },
+    {
+      "surface": "中林",
+      "reading": "チュウリン"
+    },
+    {
+      "surface": "中緯度",
+      "reading": "チュウイド"
+    },
+    {
+      "surface": "中間点",
+      "reading": "チュウカンテン"
+    },
+    {
+      "surface": "乾生",
+      "reading": "カンセイ"
+    },
+    {
+      "surface": "信頼度０",
+      "reading": "シンライドゼロ"
+    },
+    {
+      "surface": "光害",
+      "reading": "ヒカリガイ"
+    },
+    {
+      "surface": "全幹",
+      "reading": "ゼンカン"
+    },
+    {
+      "surface": "内輪",
+      "reading": "ナイリン"
+    },
+    {
+      "surface": "凍性",
+      "reading": "トウセイ"
+    },
+    {
+      "surface": "凹地形",
+      "reading": "オウチケイ"
+    },
+    {
+      "surface": "動的荷重",
+      "reading": "ドウテキカジュウ"
+    },
+    {
+      "surface": "収束形高",
+      "reading": "シュウソクケイコウ"
+    },
+    {
+      "surface": "土場等",
+      "reading": "ドバトウ"
+    },
+    {
+      "surface": "土層厚",
+      "reading": "ドソウアツ"
+    },
+    {
+      "surface": "土石流先頭部",
+      "reading": "ドセキリュウセントウブ"
+    },
+    {
+      "surface": "塩鉱物",
+      "reading": "エンコウブツ"
+    },
+    {
+      "surface": "夏鳥",
+      "reading": "ナツドリ"
+    },
+    {
+      "surface": "嫌気",
+      "reading": "ケンキ"
+    },
+    {
+      "surface": "実世界",
+      "reading": "ジツセカイ"
+    },
+    {
+      "surface": "実作業",
+      "reading": "ジツサギョウ"
+    },
+    {
+      "surface": "実効率",
+      "reading": "ジツコウリツ"
+    },
+    {
+      "surface": "小径木",
+      "reading": "ショウケイボク"
+    },
+    {
+      "surface": "帯電液滴",
+      "reading": "タイデンエキテキ"
+    },
+    {
+      "surface": "年増加",
+      "reading": "ネンゾウカ"
+    },
+    {
+      "surface": "幹形",
+      "reading": "カンケイ"
+    },
+    {
+      "surface": "床被覆",
+      "reading": "ショウヒフク"
+    },
+    {
+      "surface": "底泥",
+      "reading": "テイデイ"
+    },
+    {
+      "surface": "径化",
+      "reading": "ケイカ"
+    },
+    {
+      "surface": "待避所",
+      "reading": "タイヒジョ"
+    },
+    {
+      "surface": "感潮",
+      "reading": "カンチョウ"
+    },
+    {
+      "surface": "折線",
+      "reading": "セッセン"
+    },
+    {
+      "surface": "指静脈",
+      "reading": "シジョーミャク"
+    },
+    {
+      "surface": "換算沖波",
+      "reading": "カンサンオキナミ"
+    },
+    {
+      "surface": "摩擦杭",
+      "reading": "マサツグイ"
+    },
+    {
+      "surface": "新生鎖",
+      "reading": "シンセイサ"
+    },
+    {
+      "surface": "日本政府",
+      "reading": "ニホンセイフ"
+    },
+    {
+      "surface": "早生",
+      "reading": "ソウセイ"
+    },
+    {
+      "surface": "望価",
+      "reading": "ボウカ"
+    },
+    {
+      "surface": "板状",
+      "reading": "バンジョー"
+    },
+    {
+      "surface": "林床被覆",
+      "reading": "リンショウヒフク"
+    },
+    {
+      "surface": "根量",
+      "reading": "コンリョウ"
+    },
+    {
+      "surface": "検討不足",
+      "reading": "ケントウブソク"
+    },
+    {
+      "surface": "標尺",
+      "reading": "ヒョウシャク"
+    },
+    {
+      "surface": "横風",
+      "reading": "ヨコカゼ"
+    },
+    {
+      "surface": "樹上等",
+      "reading": "ジュジョウトウ"
+    },
+    {
+      "surface": "樹種差",
+      "reading": "ジュシュサ"
+    },
+    {
+      "surface": "止水域",
+      "reading": "シスイイキ"
+    },
+    {
+      "surface": "止水性",
+      "reading": "シスイセイ"
+    },
+    {
+      "surface": "母分散",
+      "reading": "ボブンサン"
+    },
+    {
+      "surface": "母平均",
+      "reading": "ボヘイキン"
+    },
+    {
+      "surface": "毎年低下",
+      "reading": "マイネンテイカ"
+    },
+    {
+      "surface": "毎年拡大",
+      "reading": "マイネンカクダイ"
+    },
+    {
+      "surface": "水収支",
+      "reading": "スイシュウシ"
+    },
+    {
+      "surface": "水素鎖",
+      "reading": "スイソサ"
+    },
+    {
+      "surface": "水面形",
+      "reading": "スイメンケイ"
+    },
+    {
+      "surface": "氾濫原",
+      "reading": "ハンランゲン"
+    },
+    {
+      "surface": "法定手続",
+      "reading": "ホウテイテツヅキ"
+    },
+    {
+      "surface": "波群",
+      "reading": "ハグン"
+    },
+    {
+      "surface": "泥分",
+      "reading": "デイブン"
+    },
+    {
+      "surface": "活魚",
+      "reading": "カツギョ"
+    },
+    {
+      "surface": "混合砂",
+      "reading": "コンゴウサ"
+    },
+    {
+      "surface": "減算済み",
+      "reading": "ゲンサンズミ"
+    },
+    {
+      "surface": "減風",
+      "reading": "ゲンプウ"
+    },
+    {
+      "surface": "温度依存",
+      "reading": "オンドイソン"
+    },
+    {
+      "surface": "無傷事故",
+      "reading": "ムショウジコ"
+    },
+    {
+      "surface": "熱型",
+      "reading": "ネツガタ"
+    }
+  ]
+}

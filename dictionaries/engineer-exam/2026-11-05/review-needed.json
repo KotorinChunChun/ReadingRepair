@@ -1,0 +1,19 @@
+{
+  "format": "readingrepair.shared-dictionary-review.v1",
+  "entries": [
+    {
+      "surface": "大粒径",
+      "registered_reading": "オオリュウケイ",
+      "proposed_reading": "ダイリュウケイ",
+      "status": "reference_agreed_native_correction_pending",
+      "independent_model_votes": 2,
+      "native_correction_verified": false,
+      "human_listening_verified": false,
+      "reason": "資料と独立モデルの新判定は提案読みを支持するが、実辞書の訂正と同じ文章の前後音声/native確認は未完了。",
+      "references": [
+        "https://ndlsearch.ndl.go.jp/books/R100000002-I000008380958",
+        "https://www.nippo-c.co.jp/tech_info/list.html"
+      ]
+    }
+  ]
+}
