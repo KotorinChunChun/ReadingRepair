@@ -19,3 +19,17 @@
 公開前のファイル一覧・秘匿情報・リンク・JSON・差分を点検した。ライセンスへの相対リンク1箇所を修正後に再検証し、すべて成功した。辞書ディレクトリはLFに固定し、Gitのstage済みblobのSHA-256もmanifestと一致した。アプリコードを変更していないため全アプリビルドは行わず、既存parserによるデータ検証を対象にした。
 
 GitHubのプロジェクト用認証はKotorinChunChun、公開先は同所有者のReadingRepair（public）。別cloneのdata/dictionary-snapshot-20261105へ78404c64ce5cb67c7f85e01c36fd4375048ba8c0をpushし、[PR #2](https://github.com/KotorinChunChun/ReadingRepair/pull/2)を作成した。辞書・説明・manifestの公開6ファイルをGitHubから再取得し、全件のSHA-256と容量の一致を確認した。mainへのマージとReleaseの作成は行っていない。
+
+## 2026-11-06 更新計画
+
+本人からpullと当該PCの収集辞書のpush/PRを依頼された。認証主体KotorinChunChunと既存PR #2のOPENをAPIで確認し、元の音声処理用ソースとローカルUI作業を保持する専用worktreeで最新mainをpull --ff-onlyした。mainは最新で追加の取り込み差分はなかった。重複PRを作らず、既存のdata/dictionary-snapshot-20261105を更新する。
+
+保存済み登録結果・実exportと公開snapshotを再照合し、登録済み分を保持する。大粒径に加え、水収支の新しい資料付き独立2票も確認する。実訂正と全出現の前後測定が終わっていない語はreview-neededへ分離し、暫定利用版とAPI用JSONから除く。登録時点snapshotの旧読みを提案読みへ置き換えて実測成功を作らない。既存の個人辞書5語、試験原文、音声、認証、設定、ローカルパス、生ログ、モデルraw応答は追加しない。
+
+既存native/JSON parser、表記一意性、初期語排除、exactな除外2形式とmanifest SHA/容量を検証する。公開diffと登録履歴を独立レビューし、対象ファイルだけを日本語でコミットして同PRへpushする。GitHubから変更ファイルを再取得し、commit SHA・内容・PR base/headを確認して提出結果を記録する。アプリコード・版・Release・実辞書は変更しない。
+
+## 2026-11-06 データ検証結果
+
+実辞書322行は初期個人5語と追加317語に一致し、登録snapshotは前版・保存exportと全bytesが一致した。追加317語の保存済み独立2票以上・登録後native一致と224個の実proofファイルを再照合した。測量士補・測量士の新規登録済み追加はなかった。水収支の新判定は、API送信を禁止した状態でraw/request/model・全原文文脈から再構成し、ミズシュウシの独立2票とpreferred状態を確認した。実訂正や人間の聴取を完了扱いにしていない。
+
+大粒径・水収支を除いた315語と同順序のAPI JSONを確認し、その他のnative bytes・属性・アクセントを保持した。既存parserで317/315/315語、表記一意性、初期5語排除、2行だけのexact除外、manifestの全SHA/容量を確認した。公開差分の独立レビューに追加指摘はなく、原文・認証・設定・生ログ・モデルraw・個人初期語・ローカルpathの混入もなかった。アプリコード・版を変更しないため、アプリ全ビルドを再実行せずデータ検証を行った。

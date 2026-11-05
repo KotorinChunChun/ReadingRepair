@@ -4,8 +4,8 @@
   "source_exam": "技術士一次試験",
   "status": "provisional",
   "registered_additions": 317,
-  "provisional_entries": 316,
-  "review_needed_entries": 1,
+  "provisional_entries": 315,
+  "review_needed_entries": 2,
   "initial_seed_entries_excluded": 5,
   "unconfirmed_additions_included": false,
   "source_run_complete": false,
@@ -22,16 +22,17 @@
       "bytes": 36010
     },
     "provisional.dic": {
-      "sha256": "d8e63c6f05c210c0b596ea56b738f83191c880736346812683fe3ad714e9560c",
-      "bytes": 35891
+      "sha256": "00366e70d5355d42bb086d15c7c60dbc798fb432d99ebd07d5afa675e8c97dc8",
+      "bytes": 35775
     },
     "words.json": {
-      "sha256": "53edf38989789819b439771d9a6cb4cf4212b3a206eeafdac39d2aae3ff3cfc3",
-      "bytes": 24896
+      "sha256": "c484f11b917800cd3697a2a57be3ad5f3b5249eb5ed4cc52e6ae3408beed3f20",
+      "bytes": 24815
     },
     "review-needed.json": {
-      "sha256": "13405d45c54d547d9a4aa006f15733df60149ce4f21c2b972299873f926198c8",
-      "bytes": 732
+      "sha256": "1fda646370fb85042be8d8a138eacfc6b2fdeb90914affd58bd7eba73a9cd331",
+      "bytes": 1597
     }
-  }
+  },
+  "review_updated_on": "2026-11-06"
 }
