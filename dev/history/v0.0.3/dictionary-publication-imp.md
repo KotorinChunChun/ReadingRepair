@@ -33,3 +33,9 @@ GitHubのプロジェクト用認証はKotorinChunChun、公開先は同所有�
 実辞書322行は初期個人5語と追加317語に一致し、登録snapshotは前版・保存exportと全bytesが一致した。追加317語の保存済み独立2票以上・登録後native一致と224個の実proofファイルを再照合した。測量士補・測量士の新規登録済み追加はなかった。水収支の新判定は、API送信を禁止した状態でraw/request/model・全原文文脈から再構成し、ミズシュウシの独立2票とpreferred状態を確認した。実訂正や人間の聴取を完了扱いにしていない。
 
 大粒径・水収支を除いた315語と同順序のAPI JSONを確認し、その他のnative bytes・属性・アクセントを保持した。既存parserで317/315/315語、表記一意性、初期5語排除、2行だけのexact除外、manifestの全SHA/容量を確認した。公開差分の独立レビューに追加指摘はなく、原文・認証・設定・生ログ・モデルraw・個人初期語・ローカルpathの混入もなかった。アプリコード・版を変更しないため、アプリ全ビルドを再実行せずデータ検証を行った。
+
+## 2026-11-06 提出結果
+
+データ更新48f7dd2077f8e49492d886ac232fcde0dc340540を既存data/dictionary-snapshot-20261105へpushし、[PR #2](https://github.com/KotorinChunChun/ReadingRepair/pull/2)のタイトルと本文を317/315/訂正待ち2語へ更新した。APIで作者KotorinChunChun、base main、headの一致とOPENを確認した。タイトル・本文の更新には既存repo権限のREST APIを使用し、認証設定を変更していない。
+
+公開6ファイルを上記commitのGitHub raw URLから認証なしで再取得し、全件のSHA-256・容量が検証済みファイルと一致した。登録snapshot317語は前版のまま保持されている。mainへのマージとRelease更新は行っていない。
