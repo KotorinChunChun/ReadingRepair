@@ -15,6 +15,8 @@
 
 辞書がない場合は`Initialize-VoisonaDictionary.ps1`で未作成のファイルだけを空のUTF-8辞書として作れます。語句の追加は同梱`ReadingRepair.Registration.exe`によるUIAと`SendMessageTimeout`を使い、直接追記はしません。最小化は復元しますが、アプリ未起動・対話セッション外・入力欄が取得できない状態では登録できません。途中まで登録できた語句は保持し、同じジョブの再開で残りを照合します。
 
+登録後は辞書パネルを閉じて編集を終了し、実ファイルの表記・読みと既存項目の保持を再確認してから音声の再生成へ進みます。
+
 ## HTTP WAV API
 
 設定を`tts_engine=http-wav`にし、`tts_env`へ外部接続設定を指定します。`api_dictionary_file`は専用JSONファイルです。VoiSona辞書とは分離されます。`tts_profile`の変更だけをCLIで保存するとプロファイル別の既定辞書へ切り替わります。GUIで変更する場合はAPI用JSON辞書パスも指定してください。
