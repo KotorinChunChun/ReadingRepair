@@ -17,7 +17,7 @@ LABELS = {
     'comparison-1-3':'登録後の評価', 'post-secondary-review':'登録後の独立照会',
     'post-adjudication':'登録後の採用判断', 'reference-final':'最終の採用基準',
     'comparison-final-before':'最終基準での登録前評価', 'comparison-final-after':'最終基準での登録後評価',
-    'summary':'前後の最終結果', 'answer':'利用者の回答',
+    'summary':'前後の最終結果', 'answer':'利用者の回答', 'dictionary-git':'辞書Git同期',
 }
 STATES={'started':'開始','completed':'完了','reused':'保存済み結果を再利用','failed':'失敗','cancelled':'停止','paused':'保留','resumed':'再開'}
 

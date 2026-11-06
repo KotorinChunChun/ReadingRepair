@@ -25,7 +25,7 @@ from reviewers import Config, DEFAULT_ENV, ReviewClients
 import progress_log
 import llm_records
 import tts_backends
-from reading_input import CONTRACT, ReadingInput, review_payload, REFERENCE_INSTRUCTION as SEGMENT_REFERENCE_INSTRUCTION
+from reading_input import CONTRACT, ReadingInput, SegmentValidationError, review_payload, REFERENCE_INSTRUCTION as SEGMENT_REFERENCE_INSTRUCTION
 
 HERE = Path(__file__).resolve().parent
 FORMAT = "voisona.pronunciation-dictionary-lab.v1"
@@ -383,16 +383,41 @@ class Llm:
             raw={'segments':[]}
             record=llm_records.begin(folder,'primary','reference-1' if name=='reference' else name,'local-dictionary',None)
             llm_records.finish(record,'locally_resolved',response_kind='local_derivation')
-        try:
-            result=plan.merge(raw)
-        except ValueError as error:
-            if not plan.queries:raise
-            reason=str(error)
-            save(folder/(name+'.validation.json'),{'status':'rejected','reason':reason,'retry':name+'-retry'})
-            # 同じモデルへ形式の訂正を一度だけ要求する。期待読み・他モデルの回答は与えない。
-            corrected=self._send(name+'-retry',SEGMENT_REFERENCE_INSTRUCTION+'\n前回の応答が区間契約に合いませんでした。全区間・全対象語を省略せず、形式を訂正してください。',
-                                 {**plan.request(),'validation_error':reason,'previous_response':raw})
-            result=plan.merge(corrected)
+        repairs=[];attempted=set()
+        while True:
+            try:
+                result=plan.merge(raw)
+                break
+            except ValueError as error:
+                if not plan.queries:raise
+                segment_id=error.segment_id if isinstance(error,SegmentValidationError) else None
+                detail=error.detail() if isinstance(error,SegmentValidationError) else {'reason':str(error)}
+                retry=name+'-retry'+('-'+segment_id if segment_id else '')
+                # 各区間1回、全体の形式訂正1回、合計4回を上限とし、同じ不正応答を回し続けない。
+                exhausted=segment_id in attempted or len(attempted)>=4
+                repairs.append({**detail,'retry':retry,'retry_exhausted':exhausted})
+                save(folder/(name+'.validation.json'),{'status':'rejected','reason':str(error),'repairs':repairs})
+                if exhausted:raise
+                attempted.add(segment_id)
+                request=plan.request(segment_id)
+                previous=raw
+                if segment_id:
+                    previous={'segments':[r for r in raw['segments'] if r['id']==segment_id]}
+                corrected=self._send(retry,SEGMENT_REFERENCE_INSTRUCTION+
+                    '\nvalidation_errorが示す区間のwordsとreadingを両方作り直してください。出力対象は今回のsegmentsだけです。'
+                    'contextsやprevious_responseにある区間外の語は読みも出力しません。今回の全idを一度ずつ返してください。',
+                    {**request,'validation_error':detail,'previous_response':previous})
+                if segment_id:
+                    # 訂正モデルにも他区間を書き換えさせず、保存した正常区間を保持する。
+                    rows=corrected.get('segments') if isinstance(corrected,dict) else None
+                    if not isinstance(rows,list) or len(rows)!=1 or not isinstance(rows[0],dict) or rows[0].get('id')!=segment_id:
+                        repairs.append({'segment_id':segment_id,'reason':'訂正応答の区間ID・件数が一致しません。','retry_exhausted':True})
+                        save(folder/(name+'.validation.json'),{'status':'rejected','repairs':repairs})
+                        raise ValueError('訂正応答の区間ID・件数が一致しません。')
+                    raw={'segments':[rows[0] if r['id']==segment_id else r for r in raw['segments']]}
+                else:
+                    raw=corrected
+        if repairs:save(folder/(name+'.validation.json'),{'status':'corrected','repairs':repairs})
         save(folder/(name+'.merged.json'),result)
         return result
 

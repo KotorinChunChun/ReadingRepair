@@ -187,6 +187,13 @@ internal static class Program
                 events.Add(new { entry.Surface, entry.Reading, state = "failed", error = ex.Message, elapsedMs = watch.Elapsed.TotalMilliseconds }); Save(); throw;
             }
         }
+        // 編集欄を残したままRESTの解析へ進むと、編集中の辞書が旧状態で保存される場合がある。
+        // パネルを閉じて編集を終えてから、登録結果を改めて読戻す。
+        if (toggle.Current.ToggleState == ToggleState.On) toggle.Toggle();
+        Thread.Sleep(100);
+        var committed = ReadDictionary(dictionaryFile);
+        foreach (var entry in plan.Entries)
+            if (ExistingReading(committed, entry) == null) throw new InvalidOperationException("編集確定後の辞書に登録内容がありません。");
         var finalText = ReadWithRetry(() => File.ReadAllText(dictionaryFile, Encoding.UTF8));
         var finalLines = finalText.Split('\n').Select(l => l.TrimEnd('\r')).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
         if (!finalLines.Take(initialLines.Length).SequenceEqual(initialLines)) throw new InvalidOperationException("既存辞書の順序・アクセントを含む保持確認に失敗しました。");
