@@ -1,0 +1,35 @@
+{
+  "format": "readingrepair.shared-dictionary-review.v1",
+  "entries": [
+    {
+      "surface": "大粒径",
+      "registered_reading": "オオリュウケイ",
+      "proposed_reading": "ダイリュウケイ",
+      "status": "reference_agreed_native_correction_pending",
+      "independent_model_votes": 2,
+      "native_correction_verified": false,
+      "human_listening_verified": false,
+      "reason": "資料と独立モデルの新判定は提案読みを支持するが、実辞書の訂正と同じ文章の前後音声/native確認は未完了。",
+      "references": [
+        "https://ndlsearch.ndl.go.jp/books/R100000002-I000008380958",
+        "https://www.nippo-c.co.jp/tech_info/list.html"
+      ]
+    },
+    {
+      "surface": "水収支",
+      "registered_reading": "スイシュウシ",
+      "proposed_reading": "ミズシュウシ",
+      "status": "reference_agreed_native_correction_pending",
+      "independent_model_votes": 2,
+      "native_correction_verified": false,
+      "allowed_variant_absence_proven": false,
+      "human_listening_verified": false,
+      "context_scope": "河川・流域のwater balance",
+      "reason": "一次資料と全対象文脈による独立モデルの新判定は提案読みを支持するが、実辞書の訂正と同じ文章の前後音声/native確認は未完了。別読みが許容されないことの証明ではない。",
+      "references": [
+        "https://www.jseg.or.jp/wp-content/uploads/2025/01/JSEG_yougo.pdf#page=1060",
+        "https://www.env.go.jp/content/900539382.pdf#page=143"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "format": "readingrepair.shared-dictionary-snapshot.v1",
+  "snapshot_at": "2026-11-05T19:02:27.205453+09:00",
+  "source_exam": "技術士一次試験",
+  "status": "provisional",
+  "registered_additions": 317,
+  "provisional_entries": 315,
+  "review_needed_entries": 2,
+  "initial_seed_entries_excluded": 5,
+  "unconfirmed_additions_included": false,
+  "source_run_complete": false,
+  "all_source_audio_completed": false,
+  "human_listening_verified": false,
+  "validation_basis": [
+    "独立モデル2票以上",
+    "保存済み登録成功記録と登録後native解析の一致"
+  ],
+  "accent_policy": "nativeファイルは実登録値を保持。個別校正済みではない。JSONには含めない。",
+  "files": {
+    "registered-snapshot.dic": {
+      "sha256": "fb69ac7a73b2ad36870e7dd730dfe3a41eee43e31bd7a98c2942f533488fc29b",
+      "bytes": 36010
+    },
+    "provisional.dic": {
+      "sha256": "00366e70d5355d42bb086d15c7c60dbc798fb432d99ebd07d5afa675e8c97dc8",
+      "bytes": 35775
+    },
+    "words.json": {
+      "sha256": "c484f11b917800cd3697a2a57be3ad5f3b5249eb5ed4cc52e6ae3408beed3f20",
+      "bytes": 24815
+    },
+    "review-needed.json": {
+      "sha256": "1fda646370fb85042be8d8a138eacfc6b2fdeb90914affd58bd7eba73a9cd331",
+      "bytes": 1597
+    }
+  },
+  "review_updated_on": "2026-11-06"
+}
