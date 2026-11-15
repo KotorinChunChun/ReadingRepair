@@ -15,7 +15,7 @@
 - [暫定共有辞書・登録時点の記録](dictionaries/engineer-exam/2026-11-05/README.md)
 - [TTS APIの接続・拡張](docs/tts-engines.md)
 - [開発・ビルド・検証](docs/development.md)
-- [ライセンス](LICENSE)
+- [MITライセンス](LICENSE)
 
 ## 画面で見る使い方
 
@@ -50,3 +50,9 @@
 既存の表記に異なる読みを指定すると「読みが競合」となり、追加ボタンは押せません。表示された既存の読みを確認し、語句を限定するか候補を修正します。
 
 ![既存の読みとの競合](docs/images/readme/05-conflict.png)
+
+## 使用言語とライブラリ
+
+- 使用言語はC#（画面）、Python（処理）、PowerShell（実行の補助）です。
+- .NET 10とWPFで画面を表示します。音声の文字起こしにはfaster-whisper、音声ファイル処理にはPyAVを使います。
+- 依存定義と資料 [画面プロジェクト](Desktop/ReadingRepair.Desktop.csproj)・[Pythonの依存定義](requirements.txt)・[第三者コンポーネント](THIRD-PARTY-NOTICES.md)
