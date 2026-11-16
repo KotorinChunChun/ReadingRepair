@@ -26,6 +26,9 @@ SetupIconFile=..\src\KotorinToys\assets\KotorinToys.ico
 #if ProductName == "OfficeAssist"
 SetupIconFile=..\tools\OfficeAssist\src\OfficeAssist\assets\OfficeAssist.ico
 #endif
+#if ProductName == "ReadingRepair"
+SetupIconFile=..\Desktop\assets\ReadingRepair.ico
+#endif
 WizardStyle=modern
 [Languages]
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
