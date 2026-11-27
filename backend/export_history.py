@@ -28,12 +28,12 @@ LLM_NAMES = ("reference", "comparison-1-2", "registration-plan", "comparison-1-3
 STAGES = (
     ("preflight", "実行条件の確認"), ("known-readings", "既存の確定読み"),
     ("reference-1", "一次LLMによる読みの仮説 1"), ("before-2-audio", "登録前の原文を音声合成してWAV化"),
-    ("before-2-whisper", "Whisperの文字起こし 2"), ("comparison-1-2", "1と2の暫定比較"),
+    ("before-2-whisper", "文字起こし 2"), ("comparison-1-2", "1と2の暫定比較"),
     ("secondary-review", "外部2モデルへの独立照会"), ("adjudication", "採用判断と確認待ち"),
     ("reference-adopted", "採用した読みの基準"), ("comparison-adopted-before", "採用基準による登録前の再評価"),
     ("registration-plan", "採用候補からの登録計画"), ("dictionary-precheck", "最新辞書との重複・競合チェック"), ("registration", "選択TTS用の辞書登録"),
     ("registered-readings", "登録後のユーザー辞書テーブル"),
-    ("after-3-audio", "登録後のTTS音声"), ("after-3-whisper", "Whisperの文字起こし 3"),
+    ("after-3-audio", "登録後のTTS音声"), ("after-3-whisper", "文字起こし 3"),
     ("comparison-1-3", "1と3の比較・再評価"),
     ("post-secondary-review", "登録後の独立照会"), ("post-adjudication", "登録後の採用判断と確認待ち"),
     ("reference-final", "最終の採用基準"), ("comparison-final-before", "最終基準による登録前の評価"),
@@ -171,11 +171,13 @@ def stage_body(trial, stage):
         return ''.join(out) or paragraph('追加対象は0件です。')
     if stage == "preflight":
         settings = data["manifest.json"]["settings"]
-        out.append(paragraph(f'LLMは{settings["llm_model"]}、Whisperは{Path(settings["whisper_model"]).name}、音声は{settings["voice"]} / {settings["voice_version"]}で実行しました。'))
+        asr = ('TranscriptionServer ' + settings['transcription_server_model'] if settings.get('asr_provider') == 'transcription-server'
+               else 'ローカルWhisper ' + Path(settings['whisper_model']).name)
+        out.append(paragraph(f'LLMは{settings["llm_model"]}、文字起こしは{asr}、音声は{settings["voice"]} / {settings["voice_version"]}で実行しました。'))
         out.append(paragraph(data['manifest.json'].get('assumption', '旧実験：一次LLMの基準読みを正解とした評価です。')))
     elif stage in ("known-readings", "registered-readings"):
         pairs = "、".join(f'{w["surface"]}＝{w["reading"]}' for w in item["words"])
-        out.append(paragraph(f'既存辞書で確定している「{pairs}」をローカルの適用対象として記録しています。Whisperへの正解ヒントには使っていません。'))
+        out.append(paragraph(f'既存辞書で確定している「{pairs}」をローカルの適用対象として記録しています。文字起こしへの正解ヒントには使っていません。'))
         table = item.get("table")
         if table:
             out.append(paragraph(f'登録順を保った全{len(table["rows"])}件のローカルスナップショットです。実際の送信内容はLLM送受信記録を参照してください。'))
@@ -194,7 +196,8 @@ def stage_body(trial, stage):
         if audio:
             out.append(f'<audio controls preload="none" aria-label="{e(position)}の音声"><source src="data:audio/wav;base64,{audio["base64"]}" type="audio/wav"></audio>')
     elif stage.endswith("-whisper"):
-        out.append(paragraph("Whisperが音声から認識した文章です。漢字への変換も含め、認識したままの文章を残しています。"))
+        asr = 'TranscriptionServer ' + item['model'] if item.get('provider') == 'transcription-server' else 'ローカルWhisper'
+        out.append(paragraph(f"{asr}が音声から認識した文章です。漢字への変換も含め、認識したままの文章を残しています。"))
         out.append(text_block(item["text"]))
         parameters = item.get("parameters", {})
         if parameters:
@@ -245,7 +248,7 @@ def render(bundle):
     newest = trials[-1]['artifacts']['manifest.json']
     if newest['status'] == 'pending_confirmation':
         body.append(paragraph('最新の試行は確認待ちです。下の点数は最後に一巡完了した試行の評価です。最新の暫定評価と質問は工程の履歴にあります。' if completed else '最新の試行は確認待ちです。表示される点数は採用未確定の暫定評価です。', 'notice'))
-    body.append(paragraph("100点はLLMとWhisperを使った比較の結果です。実音声の誤読がゼロであることを保証する値ではありません。", "notice"))
+    body.append(paragraph("100点はLLMと文字起こしを使った比較の結果です。実音声の誤読がゼロであることを保証する値ではありません。", "notice"))
     body.append('<h3>上記の評価に使った原文</h3>' + text_block(latest["original.txt"]))
     body.append('</section><section id="improvements"><h2>改善記録</h2>')
     for number, trial in enumerate(trials, 1):

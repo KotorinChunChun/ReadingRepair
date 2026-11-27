@@ -76,7 +76,7 @@ class HttpWavBackend:
     def preflight(self):
         return {'engine':self.id,'capabilities':self.capabilities,'configured':True,'connection':'音声生成時に接続を検証','voices':[field(self.settings,'voice')]}
     def analyze(self,text):
-        return {'supported':False,'engine':self.id,'reason':'このエンジンは発音解析APIを提供しません。Whisperによる文字起こしを評価します。','analyzed_text':''}
+        return {'supported':False,'engine':self.id,'reason':'このエンジンは発音解析APIを提供しません。音声の文字起こしを評価します。','analyzed_text':''}
     def transformed_text(self,text):
         import lab
         snapshot = lab.dictionary_snapshot(self.path,text)

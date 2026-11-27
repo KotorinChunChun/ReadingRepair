@@ -87,12 +87,12 @@ pwshで ./scripts/New-AppIcon.ps1 を実行すると、Desktop/assetsへICOと�
 
 ## KotorinToys用インストーラー
 
-scripts/Build-Release.ps1はtool.jsonの製品版を使い、新しいZIPとSHA256SUMS.txtを生成します。既存ZIPは上書きしません。別の仮想環境を使う場合は-PythonExecutableで指定します。
+scripts/Build-Release.ps1はtool.jsonの製品版を使い、新しいZIPとSHA256SUMS.txtを生成します。既存ZIPは上書きしません。別の仮想環境を使う場合は-PythonExecutableで指定します。SQLite DLLはハッシュ固定の公式Windows x64 ZIPから採用し、同梱CLIの実行結果で確認します。公式ZIPを取得済みなら -SQLiteArchive で指定できます。
 
 scripts/Build-Installer.ps1は、同じ版のZIPと明示したSHA-256、自己完結型の共通Maintenance、署名確認済みInno Setupコンパイラー、同じ採用ソースの.NET発行物を入力にします。backend・EXE・製品定義の版を照合し、標準Inno EXE・ReadingRepair-packages.json・ReadingRepair-SHA256SUMS.txtを新規出力へ生成します。
 
 ```powershell
-$build=Get-Content ./release/v0.0.4/build-result.json -Raw | ConvertFrom-Json
+$build=Get-Content ./release/v0.0.5/build-result.json -Raw | ConvertFrom-Json
 ./scripts/Build-Installer.ps1 -PortableArchive $build.archive -ExpectedArchiveSha256 $build.sha256 -MaintenanceDirectory <共通Maintenanceの自己完結出力> -Compiler <署名確認済みISCC.exe> -ApplicationDirectory $build.bundle -RegistrationDirectory (Join-Path $build.bundle registration)
 ```
 

@@ -46,7 +46,7 @@ public partial class App : Application
                 }
                 var buttons=Descendants(window).OfType<Button>().Where(b=>b.Content is string).Select(b=>new {name=b.Content!.ToString(),tooltip=b.ToolTip is not null,enabled=b.IsEnabled}).ToArray();
                 var iconLoaded=window.Icon is System.Windows.Media.Imaging.BitmapSource {PixelWidth: > 0, PixelHeight: > 0};
-                var result=new {name="ReadingRepair",version="0.0.4",title=window.Title,ready=window.IsReady,iconLoaded,buttons};
+                var result=new {name="ReadingRepair",version="0.0.5",title=window.Title,ready=window.IsReady,iconLoaded,buttons};
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(report))!);
                 await File.WriteAllTextAsync(report,JsonSerializer.Serialize(result,new JsonSerializerOptions {WriteIndented=true}));
                 Shutdown(window.IsReady && iconLoaded && buttons.Length>0 && buttons.All(b=>b.tooltip) ? 0:1);

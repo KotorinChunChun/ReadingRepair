@@ -44,6 +44,8 @@ public partial class MainWindow : Window
     {
         ["python"]="Python実行ファイル（開発時）",
         ["tts_engine"]="TTSエンジン（voisona / http-wav）",["tts_profile"]="API辞書プロファイル",["tts_env"]="TTS接続の外部設定ファイル",["api_dictionary_file"]="HTTP TTS用JSON辞書",["runs_root"]="検証結果の保存先",
+        ["asr_provider"]="文字起こし方式（local-whisper / transcription-server）",
+        ["transcription_server_url"]="TranscriptionServerのURL",["transcription_server_model"]="TranscriptionServerのモデルID",
         ["whisper_model"]="Whisperモデル",["whisper_site_packages"]="Whisperライブラリのフォルダー",["reviewer_env"]="外部モデルの設定ファイル",
         ["dictionary_file"]="VoiSonaユーザー辞書",["llm_model"]="一次LLMモデル",["voice"]="ボイス",["voice_version"]="ボイスのバージョン",
         ["gemini_transport"]="Gemini接続方式（api / cli）",["review_timeout"]="外部モデルの待機時間（秒）"
@@ -249,9 +251,10 @@ public partial class MainWindow : Window
         var q=question.Data;QuestionContext.Text=Text(q["context"]);
         var providerStates=new Dictionary<string,string> { ["ok"]="応答取得",["unavailable"]="照会失敗",["disabled"]="無効",["not_configured"]="キー未設定" };
         var tts=string.Join(" / ",q["tts_readings"]?.AsArray().Select(Text) ?? []);
-        var explanation=Text(q["tts_status"]) switch {"recalculated"=>"保存済みTTS解析を再照合", "unsupported"=>"選択したエンジンは発音解析に非対応。Whisperの結果を参照してください。","unmapped"=>"解析は取得済みですが対象語に対応づけできません", "not_recorded"=>"TTS解析が未取得",_=>"TTS解析の発音"};
+        var explanation=Text(q["tts_status"]) switch {"recalculated"=>"保存済みTTS解析を再照合", "unsupported"=>"選択したエンジンは発音解析に非対応。文字起こしの結果を参照してください。","unmapped"=>"解析は取得済みですが対象語に対応づけできません", "not_recorded"=>"TTS解析が未取得",_=>"TTS解析の発音"};
         var lines=new List<string> {$"一次LLMの仮説（{Text(q["primary_model"])}）："+string.Join(" / ",q["primary_readings"]?.AsArray().Select(Text) ?? []),$"TTSの発音：{(tts.Length>0 ? tts:"未確定")}（{explanation}）"};
-        lines.Add("Whisperの文字起こし："+(q["whisper_recorded"]?.GetValue<bool>()==true ? Text(q["whisper_text"]):"未実施"));
+        var asrName=Text(q["asr_provider"])=="transcription-server" ? "TranscriptionServer "+Text(q["asr_model"]) : "ローカルWhisper";
+        lines.Add($"{asrName}の文字起こし："+(q["whisper_recorded"]?.GetValue<bool>()==true ? Text(q["whisper_text"]):"未実施"));
         lines.AddRange(q["opinions"]?.AsArray().Select(p=>$"{Text(p?["provider"])}（{Text(p?["model"])}）：{Text(p?["opinion"]?["reading"])}　{Text(p?["opinion"]?["reason"])}（{providerStates.GetValueOrDefault(Text(p?["status"]),Text(p?["status"]))}{(p?["http_status"]!=null ? " HTTP "+Text(p["http_status"]):"")}）") ?? []);
         lines.AddRange(q["votes"]?.AsArray().Select(v=>$"有効票：{Text(v?["provider"])} → {Text(v?["reading"])}") ?? []);
         lines.AddRange(q["abstentions"]?.AsArray().Select(v=>$"棄権：{Text(v?["provider"])}（{Text(v?["reason"])}）") ?? []);

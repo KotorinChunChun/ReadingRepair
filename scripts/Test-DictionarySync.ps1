@@ -3,7 +3,7 @@ param(
     [string]$Workspace=(Join-Path $PSScriptRoot '..'),
     [string]$PythonExecutable=(Join-Path $PSScriptRoot '../.venv/Scripts/python.exe'),
     [string]$DesktopAssembly,
-    [string]$Output=(Join-Path $PSScriptRoot ('../dev/history/v0.0.4/logs/dictionary-gui-sync-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))))
+    [string]$Output=(Join-Path $PSScriptRoot ('../dev/history/v0.0.5/logs/dictionary-gui-sync-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))))
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $out=[IO.Path]::GetFullPath($Output)

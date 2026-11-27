@@ -1,6 +1,8 @@
 #requires -Version 7.0
 param(
-    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log','engines','synthesize','transcribe','version','sync-dictionary-git')][string]$Command='doctor',
+    [Parameter(Position=0)][ValidateSet('doctor','settings','save-settings','create','execute','status','history','answer','stop','audio','export','dictionary','check-dictionary','add-dictionary','log','llm-log','engines','synthesize','transcribe','version','sync-dictionary-git', 'synthesize-voisona', 'serve-voisona')][string]$Command='doctor',
+    [ValidateRange(1024,65535)][int]$ListenPort=32766,
+    [ValidateRange(1,65535)][int]$UpstreamPort=32767,
     [string]$Job,
     [string]$OutputFile,
     [string]$AudioFile,
@@ -43,5 +45,6 @@ if($RetryReviewers){$arguments+='--retry-reviewers'}
 if($Apply){$arguments+='--apply'}
 if($Command -eq 'audio'){$arguments+=@('--phase',$Phase)}
 if($Play){$arguments+='--play'}
+if($Command -eq 'serve-voisona'){$arguments+=@('--listen-port',$ListenPort,'--upstream-port',$UpstreamPort)}
 & $Python @arguments
 exit $LASTEXITCODE

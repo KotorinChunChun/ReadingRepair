@@ -4,7 +4,7 @@
 
 KotorinToysで「状態を更新」し、ReadingRepairを選んで「インストール」を実行します。公開版・容量・SHA-256の確認後、現在ユーザーのPrograms/ReadingRepairへ導入します。自動起動は有効にしません。Pythonと.NETの実行環境を同梱し、既存の設定・履歴はLocalAppData/ReadingRepairへ保持します。
 
-GitHub ReleasesからReadingRepair-0.0.4-setup.exeを直接取得することもできます。ZIP版もログイン不要で利用できます。TTS・Whisperモデル・Codex CLIの初期設定は導入方式に関係なく必要です。
+GitHub ReleasesからReadingRepair-0.0.5-setup.exeを直接取得することもできます。ZIP版もログイン不要で利用できます。導入方式にかかわらず、TTS・文字起こし・Codex CLIの初期設定が必要です。
 
 ## 準備
 
@@ -13,7 +13,7 @@ Windows 11 x64を対象とします。配布ZIPは任意のフォルダーへ展
 初回は[モデル取得・接続・辞書作成を含む手順](first-run.md)を参照してください。配布版を使う場合、Pythonや.NET SDKの別インストールは不要です。Whisperライブラリとモデル本体は別で、モデルは外部に配置します。
 
 1. PowerShell 7とCodex CLIを用意し、`codex login`で一次LLMを使用可能にします。
-2. faster-whisper形式のモデルを準備して「設定」のWhisperモデルに指定します。モデルは配布しません。
+2. 既定のローカルWhisperを使う場合は、faster-whisper形式のモデルを「設定」のWhisperモデルに指定します。モデルは配布しません。TranscriptionServerを使う場合は、次節で接続先とモデルを設定します。
 3. `tts.env.example`と`reviewers.env.example`をソース外へコピーし、キーを設定します。既定先は`C:/AI/env/ReadingRepair/tts.env`と`reviewers.env`です。
 4. 「設定」でTTSエンジン、ボイス、接続ファイル、外部モデル、辞書を指定して保存します。「依存を診断」で接続を確認します。
 
@@ -23,9 +23,27 @@ VoiSona Talkは起動済みのローカルREST APIを使用します。ネイテ
 
 HTTP TTSは[エンジン接続](tts-engines.md)を参照してください。API固有の設定は利用者が指定します。
 
+## TranscriptionServerで文字起こし
+
+「設定」の「文字起こし方式」に `transcription-server` を入力し、URLとモデルIDを設定します。既定のURLは `http://127.0.0.1:8769` です。v0.1.17以降のプロトコル3に対応します。モデルIDはサーバーの `/v1/models` が返す `engine/model` 形式です。「依存を診断」を開くと、サーバーの版・認証・受付と、日本語に対応する指定モデルを確認できます。モデルIDが空の場合は利用可能な候補を表示します。
+
+同じPCと信頼LANではサーバーが発行する一時トークンを自動で取得します。Bearer認証の公開運用ではHTTPSのURLを指定し、接続キーを起動環境の `READINGREPAIR_TRANSCRIPTION_SERVER_API_KEY` に設定します。認証情報は設定や履歴に保存しません。
+
+新しく作る実行から設定が反映されます。音声化したWAVだけを認識サーバーに送ります。サーバー側では認識ジョブと音声が保管されます。検証結果に文字起こしの方式とモデルIDが残ります。従来の認識を使う場合は「文字起こし方式」を `local-whisper` に設定します。
+
+CLIでは隔離した設定JSONに次の値を指定して `doctor` や `transcribe` を実行できます。モデルIDは接続先で利用できるものを指定してください。
+
+```json
+{
+  "asr_provider": "transcription-server",
+  "transcription_server_url": "http://127.0.0.1:8769",
+  "transcription_server_model": "whisper/small"
+}
+```
+
 ## 変換と確認
 
-「変換の開始」は原文を保存し、登録済み読みの事前適用と未確定区間だけの一次LLM照会、WAV生成、Whisper文字起こし、差分比較を行います。未確定語は必要な原文の文脈だけを添えてGemini・Sarashinaへ独立照会します。一次LLMを含む有効な同読み2票以上を仮採用し、採用候補を辞書と照合して登録・再生成します。照会失敗と判断不能は棄権です。
+「変換の開始」は原文を保存し、登録済み読みの事前適用と未確定区間だけの一次LLM照会、WAV生成、選択した方式での文字起こし、差分比較を行います。未確定語は必要な原文の文脈だけを添えてGemini・Sarashinaへ独立照会します。一次LLMを含む有効な同読み2票以上を仮採用し、採用候補を辞書と照合して登録・再生成します。照会失敗と判断不能は棄権です。
 
 `doctor`の`ready=true`だけでは独立した2票が揃うとは限りません。外部モデルが未設定なら、TTSとの差がある候補は確認待ちになります。実際の本人回答と指定読みを記録し、AIの推測を本人の回答や独立モデルの票として扱わないでください。
 

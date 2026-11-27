@@ -1,7 +1,8 @@
 #requires -Version 7.0
 param(
     [string]$OutputRoot=(Join-Path $PSScriptRoot '../release'),
-    [string]$PythonExecutable=(Join-Path $PSScriptRoot '../.venv/Scripts/python.exe')
+    [string]$PythonExecutable=(Join-Path $PSScriptRoot '../.venv/Scripts/python.exe'),
+    [string]$SQLiteArchive
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -17,9 +18,20 @@ if(Test-Path -LiteralPath $stage){throw '新しい配布先を指定してくだ
 [IO.Directory]::CreateDirectory($bundle)|Out-Null
 $python=[IO.Path]::GetFullPath($PythonExecutable)
 $env:PYTHONUTF8='1'
+$sqliteVersion='3.54.1'
+if(!$SQLiteArchive){
+    $SQLiteArchive=Join-Path $stage 'sqlite-dll-win-x64-3540100.zip'
+    Invoke-WebRequest -Uri 'https://www.sqlite.org/2026/sqlite-dll-win-x64-3540100.zip' -OutFile $SQLiteArchive
+}
+$SQLiteArchive=(Resolve-Path -LiteralPath $SQLiteArchive).Path
 & $python -m PyInstaller --noconfirm --clean --name ReadingRepair.Backend --onedir --console --distpath (Join-Path $stage 'python-dist') --workpath (Join-Path $stage 'python-build') --specpath $stage --paths (Join-Path $root 'backend') --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers --collect-all onnxruntime --collect-all av --copy-metadata huggingface-hub --copy-metadata faster-whisper (Join-Path $root 'backend/application.py')
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 Copy-Item -LiteralPath (Join-Path $stage 'python-dist/ReadingRepair.Backend') -Destination (Join-Path $bundle 'backend') -Recurse
+$sqliteDll=Join-Path $bundle 'backend/_internal/sqlite3.dll'
+if(!(Test-Path -LiteralPath $sqliteDll -PathType Leaf)){throw '置換対象のSQLite DLLがありません。'}
+# 公式アーカイブの固定ハッシュを照合し、必要なDLLだけを取り出す。
+& $python -c "from pathlib import Path; import hashlib,sys,zipfile; archive,dll=map(Path,sys.argv[1:]); sys.exit('SQLite ZIP hash mismatch') if hashlib.sha3_256(archive.read_bytes()).hexdigest() != 'c2d09c8babb9399277055c057c97a53f1ffd7c5f11d0c1f2118ffdfa39f2daa4' else None; dll.write_bytes(zipfile.ZipFile(archive).read('sqlite3.dll'))" $SQLiteArchive $sqliteDll
+if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 foreach($file in @('Invoke-LabLlm.ps1','CodexClient.psm1')){Copy-Item -LiteralPath (Join-Path $root ('backend/'+$file)) -Destination (Join-Path $bundle 'backend')}
 dotnet publish (Join-Path $root 'Desktop/ReadingRepair.Desktop.csproj') -c Release -r win-x64 --self-contained true -p:NuGetAudit=false -o $bundle --nologo
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
@@ -34,7 +46,9 @@ $definition|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $bundle
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 # 配布物からしか起動しない。利用者のデータは参照しないversion照合。
 $version=& (Join-Path $bundle 'backend/ReadingRepair.Backend.exe') version
-if($LASTEXITCODE -ne 0 -or ($version|ConvertFrom-Json).result.version -ne $productVersion){throw '同梱backendのバージョンを確認できません。'}
+if($LASTEXITCODE -ne 0){throw '同梱backendを起動できません。'}
+$backendVersion=($version|ConvertFrom-Json).result
+if($backendVersion.version -ne $productVersion -or $backendVersion.sqlite_version -ne $sqliteVersion){throw '同梱backendとSQLiteのバージョンを確認できません。'}
 # 配布に不要なデバッグ情報とONNX開発ツールを、新規生成領域だけから除外する。
 $bundlePrefix=[IO.Path]::GetFullPath($bundle)+[IO.Path]::DirectorySeparatorChar
 $excluded=@(Get-ChildItem -LiteralPath $bundle -Recurse -File -Filter '*.pdb')

@@ -9,7 +9,7 @@
 
 ## VoiSona Talk
 
-`tts_env`に指定した外部ファイルで`VOISONA_BASE_URL`、`VOISONA_USER`、`VOISONA_PASSWORD`を設定します。URLはループバック専用です。ボイス名とバージョンはアプリ設定で指定します。`dictionary_file`にはVoiSonaの既存辞書を指定します。
+`tts_env`に指定した外部ファイルで`VOISONA_BASE_URL`、`VOISONA_USER`、`VOISONA_PASSWORD`を設定します。URLはループバック専用です。[従来のポートをReadingRepair経由に切り替える手順](voisona-gateway.md)も使えます。ボイス名とバージョンはアプリ設定で指定します。`dictionary_file`にはVoiSonaの既存辞書を指定します。
 
 接続先の既定ポートは32766です。HTTP 401は認証未完了、`voices.items=[]`はAPIから利用できるボイスがない状態なので、VoiSona側のライブラリ取得を確認します。既定の設定値はインストール済みボイスを示しません。実際の`GET /api/talk/v1/voices`に含まれる`voice_name`と`voice_version`を使います。[初回設定](first-run.md)に秘密を表示しない確認例があります。
 

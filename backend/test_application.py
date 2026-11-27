@@ -35,6 +35,25 @@ class ApplicationTests(unittest.TestCase):
             stack.enter_context(redirect_stdout(io.StringIO()))
             return self.app.execute(job['id'], **kwargs)
 
+    def test_transcription_server_result_is_used_for_reading_comparison(self):
+        from test_transcription_server import transcription_service
+
+        with transcription_service(mode='local') as (settings, calls):
+            self.app.save_settings({**settings, 'whisper_model': ''})
+            job = self.app.create({'text': '上手', 'mode': 'verify'})
+            self.app.save_settings({'asr_provider': 'local-whisper', 'whisper_model': 'different-model'})
+            result = self.execute(job)
+        path = self.app.directory(job['id'])
+        self.assertEqual(result['status'], 'pending_confirmation', result)
+        transcript = lab.load(path / 'before-2-whisper.json')
+        comparison = lab.load(path / 'comparison-1-2.json')
+        self.assertEqual((transcript['model'], transcript['text']), ('whisper/small', 'ジョーズ'))
+        self.assertEqual(comparison['observed_reading'], transcript['text'])
+        self.assertEqual(result['questions'][0]['asr_provider'], 'transcription-server')
+        self.assertEqual(result['questions'][0]['asr_model'], 'whisper/small')
+        self.assertTrue(calls[3]['file'].startswith(b'RIFF'))
+        self.assertEqual(self.simulation.registrations, 0)
+
     def test_create_pending_answer_and_resume_share_the_same_run(self):
         job=self.app.create({'text':'上手'})
         before=self.execute(job)
